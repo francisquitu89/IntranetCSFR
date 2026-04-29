@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles (explicit instead of @apply to avoid PostCSS issues) */
+body {
+  background: #f8fafc; /* tailwind bg-gray-50 */
+  color: #111827; /* tailwind text-gray-900 */
+}
+
+h1 {
+  font-size: 2.25rem; /* approx text-4xl */
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.5rem; /* approx text-2xl */
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.25rem; /* approx text-xl */
+  font-weight: 600;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
