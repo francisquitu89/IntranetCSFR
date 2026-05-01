@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
+import { BackButton } from "./components/BackButton";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegistroPage } from "./pages/RegistroPage";
@@ -90,6 +91,7 @@ function App() {
     <Router>
       <div className="app-shell">
         <Navigation />
+        <BackButton />
         {usuario && (
           <div className="container-max" style={{ paddingTop: "1rem" }}>
             <div className="top-actions-bar">

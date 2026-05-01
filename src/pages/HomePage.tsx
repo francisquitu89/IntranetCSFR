@@ -102,10 +102,8 @@ export function HomePage({ usuario }: HomePageProps) {
               : "Portal de Reservas y Soporte"}
           </p>
           <div className="hero-actions">
-            <Link to="/reservas" className="button">Ir a Reservas</Link>
-            <Link to="/tickets" className="button-secondary">Ir a Tickets</Link>
             {(usuario.rol === "admin" || usuario.rol === "director") && (
-              <Link to="/admin" className="button-ghost">Abrir Admin</Link>
+              <Link to="/admin" className="button">Abrir Admin</Link>
             )}
           </div>
         </section>

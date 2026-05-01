@@ -51,11 +51,18 @@ export interface Usuario {
 export interface Reserva {
   id: string;
   usuario_id: string;
+  usuario_email?: string;
+  usuario_nombre?: string;
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director";
   sala: SalaType;
   fecha_inicio: string;
   fecha_fin: string;
   descripcion?: string;
   estado: "confirmada" | "cancelada" | "pendiente";
+  recurrence_type?: "none" | "weekly" | "monthly" | "yearly";
+  recurrence_end_date?: string;
+  recurrence_count?: number;
+  original_reserva_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -15,7 +15,7 @@ export const ticketsService = {
     return data || [];
   },
 
-  // Obtener todos los tickets (para admins)
+  // Obtener todos los tickets (para funcionarios/admins)
   async obtenerTodosTickets(): Promise<Ticket[]> {
     const { data, error } = await supabase
       .from("tickets")
@@ -24,6 +24,17 @@ export const ticketsService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  // Obtener tickets según el rol del usuario
+  async obtenerTicketsSegunRol(usuarioId: string, rol: string): Promise<Ticket[]> {
+    if (rol === "funcionario" || rol === "admin" || rol === "director") {
+      // Funcionarios, admins y directores ven todos los tickets
+      return this.obtenerTodosTickets();
+    } else {
+      // Profesores solo ven sus propios tickets
+      return this.obtenerTicketsUsuario(usuarioId);
+    }
   },
 
   // Crear nuevo ticket

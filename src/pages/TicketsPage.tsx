@@ -55,7 +55,7 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
     if (!usuario) return;
     try {
       setLoading(true);
-      const data = await ticketsService.obtenerTicketsUsuario(usuario.id);
+      const data = await ticketsService.obtenerTicketsSegunRol(usuario.id, usuario.rol);
       setTickets(data);
     } catch (err: any) {
       setError(err.message);
@@ -125,12 +125,24 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
   return (
     <main className="app-content hero" style={{ paddingTop: "2rem" }}>
       <div className="container-max">
-        <div className="section-title-wrap">
+        <div className="section-title-wrap" style={{ flexDirection: window.innerWidth < 768 ? "column" : "row", gap: window.innerWidth < 768 ? "1rem" : "0" }}>
           <div>
-            <h1 className="section-title">Mis tickets</h1>
-            <p className="section-subtitle">Solicitudes de soporte con una interfaz más limpia y tecnológica.</p>
+            <h1 className="section-title">
+              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director"
+                ? "Todos los tickets"
+                : "Mis tickets"}
+            </h1>
+            <p className="section-subtitle">
+              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director"
+                ? "Dashboard de soporte - Manage todas las solicitudes"
+                : "Solicitudes de soporte con una interfaz más limpia y tecnológica."}
+            </p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="button">
+          <button 
+            onClick={() => setShowForm(!showForm)} 
+            className="button"
+            style={{ width: window.innerWidth < 768 ? "100%" : "auto", whiteSpace: "nowrap" }}
+          >
             <Plus size={18} />
             Nuevo ticket
           </button>
@@ -144,7 +156,7 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
             <p className="section-subtitle">Clasifica el problema y deja claro el contexto desde el principio.</p>
 
             <form onSubmit={handleSubmit} className="field-grid" style={{ marginTop: "1rem" }}>
-              <div className="field-grid two">
+              <div className="field-grid two" style={{ gridTemplateColumns: window.innerWidth < 768 ? "1fr" : "1fr 1fr" }}>
                 <div className="field">
                   <label>Categoría *</label>
                   <select
@@ -175,7 +187,7 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
                   </select>
                 </div>
 
-                <div className="field">
+                <div className="field" style={{ gridColumn: window.innerWidth < 768 ? "1" : "1" }}>
                   <label>Asunto *</label>
                   <input
                     type="text"
@@ -249,27 +261,29 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
           </div>
         )}
 
-        <div className="card-grid">
+        <div className="card-grid" style={{ gridTemplateColumns: window.innerWidth < 768 ? "1fr" : window.innerWidth < 1024 ? "1fr 1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }}>
           {tickets.map((ticket) => (
             <article key={ticket.id} className="stat-card">
-              <div className="section-title-wrap" style={{ marginBottom: "0.75rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div className="section-title-wrap" style={{ marginBottom: "0.75rem", flexDirection: window.innerWidth < 640 ? "column" : "row", alignItems: window.innerWidth < 640 ? "flex-start" : "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: window.innerWidth < 640 ? "100%" : "auto" }}>
                   <div className="stat-icon orange">{getStatusIcon(ticket.estado)}</div>
-                  <div>
-                    <h3 className="card-title">{ticket.asunto}</h3>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 className="card-title" style={{ wordBreak: "break-word" }}>{ticket.asunto}</h3>
                     <p className="muted" style={{ margin: 0 }}>{ticket.categoria}</p>
                   </div>
                 </div>
-                <span className={`priority-pill ${priorityClass(ticket.prioridad)}`}>{ticket.prioridad}</span>
+                <span className={`priority-pill ${priorityClass(ticket.prioridad)}`} style={{ whiteSpace: "nowrap", marginTop: window.innerWidth < 640 ? "0.5rem" : "0" }}>
+                  {ticket.prioridad}
+                </span>
               </div>
 
-              <p className="muted">{ticket.descripcion}</p>
+              <p className="muted" style={{ wordBreak: "break-word" }}>{ticket.descripcion}</p>
 
-              <div className="grid-4" style={{ marginTop: "1rem" }}>
-                <div><span className="muted">Estado</span><br />{ticket.estado}</div>
-                {ticket.sala && <div><span className="muted">Sala</span><br />{ticket.sala}</div>}
-                {ticket.equipo && <div><span className="muted">Equipo</span><br />{ticket.equipo}</div>}
-                <div><span className="muted">Creado</span><br />{format(new Date(ticket.created_at), "dd MMM yyyy", { locale: es })}</div>
+              <div className="grid-4" style={{ marginTop: "1rem", gridTemplateColumns: window.innerWidth < 640 ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: window.innerWidth < 640 ? "0.75rem" : "1rem" }}>
+                <div><span className="muted" style={{ fontSize: "0.75rem" }}>Estado</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.estado}</span></div>
+                {ticket.sala && <div><span className="muted" style={{ fontSize: "0.75rem" }}>Sala</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.sala}</span></div>}
+                {ticket.equipo && <div><span className="muted" style={{ fontSize: "0.75rem" }}>Equipo</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.equipo}</span></div>}
+                <div><span className="muted" style={{ fontSize: "0.75rem" }}>Creado</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{format(new Date(ticket.created_at), "dd MMM", { locale: es })}</span></div>
               </div>
             </article>
           ))}
