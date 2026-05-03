@@ -64,6 +64,20 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
     }
   };
 
+  const handleUpdateTicketStatus = async (ticketId: string, nuevoEstado: string) => {
+    try {
+      setLoading(true);
+      await ticketsService.actualizarTicket(ticketId, { estado: nuevoEstado as any });
+      await cargarTickets();
+    } catch (err: any) {
+      setError(err.message || "No se pudo actualizar el ticket");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canUpdateTickets = usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!usuario) return;
@@ -280,7 +294,24 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
               <p className="muted" style={{ wordBreak: "break-word" }}>{ticket.descripcion}</p>
 
               <div className="grid-4" style={{ marginTop: "1rem", gridTemplateColumns: window.innerWidth < 640 ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: window.innerWidth < 640 ? "0.75rem" : "1rem" }}>
-                <div><span className="muted" style={{ fontSize: "0.75rem" }}>Estado</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.estado}</span></div>
+                <div>
+                  <span className="muted" style={{ fontSize: "0.75rem" }}>Estado</span><br />
+                  {canUpdateTickets ? (
+                    <select
+                      value={ticket.estado}
+                      onChange={(e) => handleUpdateTicketStatus(ticket.id, e.target.value)}
+                      style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem", padding: "0.25rem", borderRadius: "0.25rem" }}
+                      className="select"
+                    >
+                      <option value="Abierto">Abierto</option>
+                      <option value="En Progreso">En Progreso</option>
+                      <option value="Resuelto">Resuelto</option>
+                      <option value="Cerrado">Cerrado</option>
+                    </select>
+                  ) : (
+                    <span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.estado}</span>
+                  )}
+                </div>
                 {ticket.sala && <div><span className="muted" style={{ fontSize: "0.75rem" }}>Sala</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.sala}</span></div>}
                 {ticket.equipo && <div><span className="muted" style={{ fontSize: "0.75rem" }}>Equipo</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.equipo}</span></div>}
                 <div><span className="muted" style={{ fontSize: "0.75rem" }}>Creado</span><br /><span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{format(new Date(ticket.created_at), "dd MMM", { locale: es })}</span></div>

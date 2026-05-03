@@ -99,6 +99,44 @@ export const notificarTicket = async (
   }
 };
 
+export const notificarCancelacionReserva = async (
+  reserva: Reserva,
+  usuario: Partial<Usuario>
+) => {
+  const cuerpoHtml = `
+    <html>
+      <body style="font-family: Arial, sans-serif;">
+        <h2>Reserva Cancelada - SSFF Intranet</h2>
+        <p>Estimado/a ${usuario.nombre},</p>
+        <p>Su reserva ha sido cancelada.</p>
+        <hr>
+        <p><strong>Detalles de la Reserva Cancelada:</strong></p>
+        <ul>
+          <li><strong>Sala:</strong> ${reserva.sala}</li>
+          <li><strong>Fecha de Inicio:</strong> ${new Date(reserva.fecha_inicio).toLocaleString("es-CL")}</li>
+          <li><strong>Fecha de Fin:</strong> ${new Date(reserva.fecha_fin).toLocaleString("es-CL")}</li>
+          ${reserva.descripcion ? `<li><strong>Descripción:</strong> ${reserva.descripcion}</li>` : ""}
+        </ul>
+        <hr>
+        <p>Si considera que esto es un error, contacte a la administración.</p>
+        <p>Cordialmente,<br>Sistema SSFF</p>
+      </body>
+    </html>
+  `;
+
+  try {
+    await registrarNotificacion({
+      destinatario: usuario.email || "",
+      cc: DEFAULT_CC_EMAIL,
+      asunto: `Reserva Cancelada - ${reserva.sala}`,
+      cuerpo_html: cuerpoHtml,
+      cuerpo_texto: `Reserva cancelada para ${reserva.sala}`,
+    });
+  } catch (error) {
+    console.error("Error al enviar notificación de cancelación:", error);
+  }
+};
+
 // Registrar en tabla de notificaciones
 async function registrarNotificacion(email: EmailPayload) {
   const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notification`;
@@ -133,4 +171,5 @@ async function registrarNotificacion(email: EmailPayload) {
 export const emailService = {
   notificarReserva,
   notificarTicket,
+  notificarCancelacionReserva,
 };

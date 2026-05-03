@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import type { Usuario } from "../types";
 
@@ -92,10 +92,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               {loading ? "Iniciando..." : "Entrar"}
             </button>
           </form>
-
-          <p className="section-subtitle" style={{ marginTop: "1rem", textAlign: "center" }}>
-            ¿No tienes cuenta? <Link to="/registro" style={{ color: "#7dd3fc", fontWeight: 700 }}>Regístrate aquí</Link>
-          </p>
         </section>
       </div>
     </main>

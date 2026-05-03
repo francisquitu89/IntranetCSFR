@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, CalendarDays, Ticket, Users, RefreshCw, Trash2, KeyRound } from "lucide-react";
+import { Bell, CalendarDays, Ticket, Users, RefreshCw, Trash2, KeyRound, Plus } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { reservasService } from "../services/reservasService";
 import { ticketsService } from "../services/ticketsService";
@@ -23,6 +23,18 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [adminActionId, setAdminActionId] = useState<string | null>(null);
+  
+  // User creation form state
+  const [showCreateUserForm, setShowCreateUserForm] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    nombre: "",
+    email: "",
+    password: "",
+    rol: "profesor" as "profesor" | "funcionario",
+    departamento: "",
+    telefono: "",
+  });
 
   const cargarDatos = async () => {
     try {
@@ -67,6 +79,71 @@ export function AdminPage({ usuario }: AdminPageProps) {
       await authService.cambiarContrasenaTemporalAdmin(usuarioId, "admin123");
     } catch (err: any) {
       setError(err.message || "No se pudo cambiar la contraseña");
+    } finally {
+      setAdminActionId(null);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newUserData.nombre || !newUserData.email || !newUserData.password) {
+      setError("Debe completar los campos requeridos (nombre, email, contraseña)");
+      return;
+    }
+
+    try {
+      setCreatingUser(true);
+      await authService.registroUsuario(
+        newUserData.email,
+        newUserData.password,
+        newUserData.nombre,
+        newUserData.rol,
+        newUserData.departamento,
+        newUserData.telefono
+      );
+      
+      setNewUserData({
+        nombre: "",
+        email: "",
+        password: "",
+        rol: "profesor",
+        departamento: "",
+        telefono: "",
+      });
+      setShowCreateUserForm(false);
+      setError("");
+      
+      // Reload data
+      await cargarDatos();
+    } catch (err: any) {
+      const errorMsg = err.message || "No se pudo crear el usuario";
+      if (errorMsg.includes("duplicate") || errorMsg.includes("email")) {
+        setError(`El email ${newUserData.email} ya está registrado en el sistema`);
+      } else {
+        setError(errorMsg);
+      }
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleEliminarUsuario = async (usuarioId: string, usuarioNombre: string) => {
+    if (!confirm(`¿Eliminar a ${usuarioNombre} definitivamente del sistema?`)) return;
+
+    try {
+      setAdminActionId(usuarioId);
+      const { error } = await supabase
+        .from("usuarios")
+        .delete()
+        .eq("id", usuarioId);
+      
+      if (error) throw error;
+      
+      // Reload data
+      await cargarDatos();
+    } catch (err: any) {
+      setError(err.message || "No se pudo eliminar el usuario");
     } finally {
       setAdminActionId(null);
     }
@@ -135,7 +212,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
       .slice(0, 8);
   }, [reservas, tickets, usuarios]);
 
-  if (usuario && usuario.rol !== "admin" && usuario.rol !== "director") {
+  if (usuario && usuario.rol !== "admin" && usuario.rol !== "director" && usuario.rol !== "funcionario") {
     return null;
   }
 
@@ -167,6 +244,110 @@ export function AdminPage({ usuario }: AdminPageProps) {
         </div>
 
         {error && <div className="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
+
+        <section className="form-card" style={{ marginBottom: "1rem" }}>
+          <div className="section-title-wrap">
+            <div>
+              <h2 className="section-title">Crear nuevo usuario</h2>
+              <p className="section-subtitle">Añade un profesor o funcionario al sistema.</p>
+            </div>
+            <button
+              onClick={() => setShowCreateUserForm(!showCreateUserForm)}
+              className="button-secondary"
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <Plus size={18} />
+              {showCreateUserForm ? "Cancelar" : "Nuevo usuario"}
+            </button>
+          </div>
+
+          {showCreateUserForm && (
+            <form onSubmit={handleCreateUser} className="field-grid" style={{ marginTop: "1rem" }}>
+              <div className="field">
+                <label>Nombre *</label>
+                <input
+                  type="text"
+                  value={newUserData.nombre}
+                  onChange={(e) => setNewUserData({ ...newUserData, nombre: e.target.value })}
+                  required
+                  className="input"
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div className="field">
+                <label>Correo electrónico *</label>
+                <input
+                  type="email"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                  required
+                  className="input"
+                  placeholder="correo@ejemplo.com"
+                />
+              </div>
+
+              <div className="field-grid two">
+                <div className="field">
+                  <label>Rol *</label>
+                  <select
+                    value={newUserData.rol}
+                    onChange={(e) => setNewUserData({ ...newUserData, rol: e.target.value as "profesor" | "funcionario" })}
+                    className="select"
+                  >
+                    <option value="profesor">Profesor</option>
+                    <option value="funcionario">Funcionario</option>
+                  </select>
+                </div>
+
+                <div className="field">
+                  <label>Teléfono</label>
+                  <input
+                    type="tel"
+                    value={newUserData.telefono}
+                    onChange={(e) => setNewUserData({ ...newUserData, telefono: e.target.value })}
+                    className="input"
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Departamento</label>
+                <input
+                  type="text"
+                  value={newUserData.departamento}
+                  onChange={(e) => setNewUserData({ ...newUserData, departamento: e.target.value })}
+                  className="input"
+                  placeholder="Ej: Inglés, Computación"
+                />
+              </div>
+
+              <div className="field">
+                <label>Contraseña *</label>
+                <input
+                  type="password"
+                  value={newUserData.password}
+                  onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                  required
+                  className="input"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {error && <div className="alert">{error}</div>}
+
+              <button
+                type="submit"
+                disabled={creatingUser}
+                className="button"
+                style={{ width: "100%" }}
+              >
+                {creatingUser ? "Creando..." : "Crear usuario"}
+              </button>
+            </form>
+          )}
+        </section>
 
         <div className="metric-grid">
           <div className="metric-card">
@@ -235,12 +416,22 @@ export function AdminPage({ usuario }: AdminPageProps) {
                   <div className="admin-row-actions">
                     <button
                       type="button"
-                      className="button-ghost"
+                      className="button"
                       onClick={() => handleResetPassword(user.id)}
                       disabled={adminActionId === user.id}
+                      style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
                     >
                       <KeyRound size={16} />
                       Cambiar contraseña
+                    </button>
+                    <button
+                      type="button"
+                      className="button-danger"
+                      onClick={() => handleEliminarUsuario(user.id, user.nombre)}
+                      disabled={adminActionId === user.id}
+                      style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                    >
+                      Eliminar
                     </button>
                     <span className={`status-pill ${user.rol === "admin" ? "status-ok" : "status-warn"}`}>
                       {user.rol}

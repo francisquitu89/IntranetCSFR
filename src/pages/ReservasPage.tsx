@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Calendar, MapPin, ShieldCheck, Ban } from "lucide-react";
-import { format, addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "../lib/supabase";
 import { AvailabilityBoard, TIME_SLOTS } from "../components/AvailabilityBoard";
@@ -18,7 +18,6 @@ const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) => aStart 
 const timeToDateTime = (date: string, time: string) => new Date(`${date}T${time}:00`);
 
 type ReservaType = "espacio" | "objeto";
-type PeriodoType = "dia" | "semana" | "mes" | "ano";
 type RecurrenceType = "none" | "weekly" | "monthly" | "yearly";
 
 export function ReservasPage({ usuario }: ReservasPageProps) {
@@ -29,7 +28,6 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [tipoReserva, setTipoReserva] = useState<ReservaType>("espacio");
-  const [periodoReserva, setPeriodoReserva] = useState<PeriodoType>("dia");
   
   const salasEspacios = SALAS_CATALOGO.filter(s => s.tipo === "Espacio");
   const salasObjetos = SALAS_CATALOGO.filter(s => s.tipo === "Objeto");

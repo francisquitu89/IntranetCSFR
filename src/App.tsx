@@ -64,7 +64,7 @@ function App() {
     }
   };
 
-  const canViewAdmin = usuario?.rol === "admin" || usuario?.rol === "director";
+  const canViewAdmin = usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "funcionario";
 
   if (loading) {
     return (

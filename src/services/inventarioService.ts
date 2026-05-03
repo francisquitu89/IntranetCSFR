@@ -16,7 +16,7 @@ export const inventarioService = {
   async actualizarCantidad(sala: SalaType, cantidad: number): Promise<InventarioItem | null> {
     const { data, error } = await supabase
       .from("inventario")
-      .upsert({ sala, cantidad }, { onConflict: ["sala"] })
+      .upsert({ sala, cantidad }, { onConflict: "sala" })
       .select()
       .single();
 

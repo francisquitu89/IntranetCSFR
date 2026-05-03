@@ -97,12 +97,12 @@ export function HomePage({ usuario }: HomePageProps) {
           <span className="eyebrow">Bienvenido</span>
           <h1 className="hero-title" style={{ fontSize: "clamp(2.1rem, 4vw, 3.4rem)" }}>Intranet de CSFR</h1>
           <p className="hero-copy">
-            {usuario.rol === "admin" || usuario.rol === "director"
+            {usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario"
               ? "Panel de Administración"
               : "Portal de Reservas y Soporte"}
           </p>
           <div className="hero-actions">
-            {(usuario.rol === "admin" || usuario.rol === "director") && (
+            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
               <Link to="/admin" className="button">Abrir Admin</Link>
             )}
           </div>
@@ -129,7 +129,7 @@ export function HomePage({ usuario }: HomePageProps) {
               <p className="muted">Crea solicitudes de soporte con prioridad y categoría clara.</p>
             </Link>
 
-            {(usuario.rol === "admin" || usuario.rol === "director") && (
+            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
               <Link to="/admin" className="feature-card">
                 <div className="feature-icon green"><Building2 size={22} /></div>
                 <h3 className="card-title">Administración</h3>

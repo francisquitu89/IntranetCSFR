@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabase";
 import type { Reserva, SalaType } from "../types";
-import { notificarReserva } from "./emailService";
+import { notificarReserva, notificarCancelacionReserva } from "./emailService";
 
 // Función auxiliar para generar fechas recurrentes
 function generarFechasRecurrentes(
@@ -140,7 +140,7 @@ export const reservasService = {
     fechaInicio: string,
     fechaFin: string,
     descripcion?: string,
-    recurrenceType?: "weekly" | "monthly" | "yearly",
+    recurrenceType?: "none" | "weekly" | "monthly" | "yearly",
     recurrenceEndDate?: string,
     recurrenceCount?: number
   ): Promise<Reserva> {
@@ -210,10 +210,6 @@ export const reservasService = {
 
     // Crear instancias recurrentes
     const instanciasParaCrear = fechasRecurrentes.slice(1).map((fecha) => {
-      const diasDiferencia = Math.floor(
-        (new Date(fecha).getTime() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      
       return {
         usuario_id: usuarioId,
         sala,
@@ -252,22 +248,76 @@ export const reservasService = {
 
   // Cancelar reserva
   async cancelarReserva(reservaId: string): Promise<void> {
+    // Obtener datos de la reserva y usuario
+    const { data: reserva, error: errorFetch } = await supabase
+      .from("reservas")
+      .select(`
+        *,
+        usuario_email:usuarios(email),
+        usuario_nombre:usuarios(nombre)
+      `)
+      .eq("id", reservaId)
+      .single();
+
+    if (errorFetch) throw errorFetch;
+
+    // Actualizar estado a cancelada
     const { error } = await supabase
       .from("reservas")
       .update({ estado: "cancelada" })
       .eq("id", reservaId);
 
     if (error) throw error;
+
+    // Enviar notificación de cancelación
+    if (reserva) {
+      try {
+        await notificarCancelacionReserva(reserva, {
+          email: reserva.usuario_email?.email,
+          nombre: reserva.usuario_nombre?.nombre,
+        });
+      } catch (emailError) {
+        console.error("Error al enviar notificación de cancelación:", emailError);
+        // No lanzar error, la reserva ya fue cancelada
+      }
+    }
   },
 
   // Eliminar reserva permanentemente
   async eliminarReserva(reservaId: string): Promise<void> {
+    // Obtener datos de la reserva y usuario
+    const { data: reserva, error: errorFetch } = await supabase
+      .from("reservas")
+      .select(`
+        *,
+        usuario_email:usuarios(email),
+        usuario_nombre:usuarios(nombre)
+      `)
+      .eq("id", reservaId)
+      .single();
+
+    if (errorFetch) throw errorFetch;
+
+    // Eliminar la reserva
     const { error } = await supabase
       .from("reservas")
       .delete()
       .eq("id", reservaId);
 
     if (error) throw error;
+
+    // Enviar notificación de cancelación
+    if (reserva) {
+      try {
+        await notificarCancelacionReserva(reserva, {
+          email: reserva.usuario_email?.email,
+          nombre: reserva.usuario_nombre?.nombre,
+        });
+      } catch (emailError) {
+        console.error("Error al enviar notificación de cancelación:", emailError);
+        // No lanzar error, la reserva ya fue eliminada
+      }
+    }
   },
 
   // Actualizar una reserva (usado por admins)
