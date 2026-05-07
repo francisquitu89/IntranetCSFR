@@ -421,6 +421,67 @@ export function AdminPage({ usuario }: AdminPageProps) {
           />
         </div>
 
+        <div style={{ marginTop: "1rem" }}>
+          <section className="form-card">
+            <div className="section-title-wrap">
+              <div>
+                <h2 className="section-title">⚙️ Gestión de inventario</h2>
+                <p className="section-subtitle">Ajusta dinámicamente la cantidad de equipos disponibles.</p>
+              </div>
+            </div>
+            <div className="grid-2" style={{ gap: "1rem" }}>
+              {SALAS_CATALOGO.filter(s => s.tipo === "Objeto").map((equipo) => {
+                const cantidadActual = inventario[equipo.value] || 0;
+                return (
+                  <div key={equipo.value} style={{ padding: "1rem", border: "1px solid #e0e0e0", borderRadius: "0.5rem" }}>
+                    <div style={{ marginBottom: "1rem" }}>
+                      <h4 style={{ margin: "0 0 0.5rem" }}>{equipo.label}</h4>
+                      <p style={{ margin: 0, fontSize: "0.9rem", color: "#666" }}>
+                        Disponibles: <strong style={{ fontSize: "1.5rem", color: cantidadActual > 0 ? "#28a745" : "#dc3545" }}>{cantidadActual}</strong> de {equipo.capacidad}
+                      </p>
+                    </div>
+                    <div className="actions" style={{ gap: "0.5rem" }}>
+                      <button
+                        onClick={() => {
+                          const nuevaCantidad = Math.max(0, cantidadActual - 1);
+                          inventarioService.actualizarCantidad(equipo.value, nuevaCantidad).then(() => cargarDatos());
+                        }}
+                        className="button-secondary"
+                        style={{ padding: "0.5rem 1rem", fontSize: "0.9rem", flex: 1 }}
+                        disabled={refreshing || cantidadActual <= 0}
+                      >
+                        ➖ Usar
+                      </button>
+                      <button
+                        onClick={() => {
+                          const nuevaCantidad = Math.min(equipo.capacidad, cantidadActual + 1);
+                          inventarioService.actualizarCantidad(equipo.value, nuevaCantidad).then(() => cargarDatos());
+                        }}
+                        className="button-secondary"
+                        style={{ padding: "0.5rem 1rem", fontSize: "0.9rem", flex: 1 }}
+                        disabled={refreshing || cantidadActual >= equipo.capacidad}
+                      >
+                        ➕ Devuelto
+                      </button>
+                      <input
+                        type="number"
+                        min="0"
+                        max={equipo.capacidad}
+                        value={cantidadActual}
+                        onChange={(e) => {
+                          const val = Math.min(equipo.capacidad, Math.max(0, parseInt(e.target.value) || 0));
+                          inventarioService.actualizarCantidad(equipo.value, val).then(() => cargarDatos());
+                        }}
+                        style={{ width: "60px", padding: "0.5rem", textAlign: "center", borderRadius: "0.25rem", border: "1px solid #ccc" }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
         <div className="grid-2" style={{ marginTop: "1rem" }}>
           <section className="form-card">
             <div className="section-title-wrap">

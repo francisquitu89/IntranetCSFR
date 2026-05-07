@@ -100,6 +100,15 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
           void cargarDatos();
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "inventario" },
+        (payload) => {
+          console.log("Inventario actualizado:", payload);
+          // Refetch el inventario inmediato
+          void cargarDatos();
+        }
+      )
       .subscribe();
 
     return () => {
@@ -241,9 +250,22 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
     if (!confirm("¿Deseas eliminar esta reserva definitivamente?")) return;
 
     try {
+      setLoading(true);
       await reservasService.eliminarReserva(reservaId);
+      
+      // Refetch inmediato de datos
+      if (usuario) {
+        const [reservasPersonales, reservasGlobales] = await Promise.all([
+          reservasService.obtenerReservasUsuario(usuario.id),
+          reservasService.obtenerReservasConfirmadasPorFecha(selectedDate),
+        ]);
+        setReservasUsuario(reservasPersonales);
+        setReservasDelDia(reservasGlobales);
+      }
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 

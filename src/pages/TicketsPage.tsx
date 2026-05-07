@@ -293,6 +293,20 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
 
               <p className="muted" style={{ wordBreak: "break-word" }}>{ticket.descripcion}</p>
 
+              {ticket.respuesta && (
+                <div style={{ marginTop: "1rem", padding: "0.75rem", backgroundColor: "#f0f8ff", borderLeft: "4px solid #2563eb", borderRadius: "0.25rem" }}>
+                  <p style={{ margin: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: "600", color: "#2563eb" }}>
+                    💬 Respuesta del soporte
+                    {ticket.respondido_en && (
+                      <span style={{ fontSize: "0.75rem", fontWeight: "normal", color: "#666", marginLeft: "0.5rem" }}>
+                        ({format(new Date(ticket.respondido_en), "dd MMM HH:mm", { locale: es })})
+                      </span>
+                    )}
+                  </p>
+                  <p style={{ margin: "0", wordBreak: "break-word", color: "#333", lineHeight: "1.5" }}>{ticket.respuesta}</p>
+                </div>
+              )}
+
               <div className="grid-4" style={{ marginTop: "1rem", gridTemplateColumns: window.innerWidth < 640 ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: window.innerWidth < 640 ? "0.75rem" : "1rem" }}>
                 <div>
                   <span className="muted" style={{ fontSize: "0.75rem" }}>Estado</span><br />

@@ -16,6 +16,18 @@ export const notificarReserva = async (
   reserva: Reserva,
   usuario: Partial<Usuario>
 ) => {
+  // Función auxiliar para traducir tipo de recurrencia
+  const traducirRecurrencia = (tipo?: string) => {
+    const map: Record<string, string> = {
+      weekly: "Cada semana",
+      monthly: "Cada mes",
+      yearly: "Cada año",
+    };
+    return map[tipo || ""] || "No";
+  };
+
+  const tieneRecurrencia = reserva.recurrence_type && reserva.recurrence_type !== "none";
+  
   const cuerpoHtml = `
     <html>
       <body style="font-family: Arial, sans-serif;">
@@ -29,6 +41,11 @@ export const notificarReserva = async (
           <li><strong>Fecha de Inicio:</strong> ${new Date(reserva.fecha_inicio).toLocaleString("es-CL")}</li>
           <li><strong>Fecha de Fin:</strong> ${new Date(reserva.fecha_fin).toLocaleString("es-CL")}</li>
           ${reserva.descripcion ? `<li><strong>Descripción:</strong> ${reserva.descripcion}</li>` : ""}
+          ${tieneRecurrencia ? `
+            <li><strong>Repetir Reserva:</strong> ${traducirRecurrencia(reserva.recurrence_type)}</li>
+            ${reserva.recurrence_end_date ? `<li><strong>Hasta:</strong> ${new Date(reserva.recurrence_end_date).toLocaleString("es-CL")}</li>` : ""}
+            ${reserva.recurrence_count ? `<li><strong>Cantidad de Repeticiones:</strong> ${reserva.recurrence_count}</li>` : ""}
+          ` : ""}
         </ul>
         <hr>
         <p>Si desea cancelar o modificar esta reserva, ingrese a su cuenta en la Intranet.</p>
@@ -103,6 +120,18 @@ export const notificarCancelacionReserva = async (
   reserva: Reserva,
   usuario: Partial<Usuario>
 ) => {
+  // Función auxiliar para traducir tipo de recurrencia
+  const traducirRecurrencia = (tipo?: string) => {
+    const map: Record<string, string> = {
+      weekly: "Cada semana",
+      monthly: "Cada mes",
+      yearly: "Cada año",
+    };
+    return map[tipo || ""] || "No";
+  };
+
+  const tieneRecurrencia = reserva.recurrence_type && reserva.recurrence_type !== "none";
+
   const cuerpoHtml = `
     <html>
       <body style="font-family: Arial, sans-serif;">
@@ -116,6 +145,11 @@ export const notificarCancelacionReserva = async (
           <li><strong>Fecha de Inicio:</strong> ${new Date(reserva.fecha_inicio).toLocaleString("es-CL")}</li>
           <li><strong>Fecha de Fin:</strong> ${new Date(reserva.fecha_fin).toLocaleString("es-CL")}</li>
           ${reserva.descripcion ? `<li><strong>Descripción:</strong> ${reserva.descripcion}</li>` : ""}
+          ${tieneRecurrencia ? `
+            <li><strong>Repetir Reserva:</strong> ${traducirRecurrencia(reserva.recurrence_type)}</li>
+            ${reserva.recurrence_end_date ? `<li><strong>Hasta:</strong> ${new Date(reserva.recurrence_end_date).toLocaleString("es-CL")}</li>` : ""}
+            ${reserva.recurrence_count ? `<li><strong>Cantidad de Repeticiones:</strong> ${reserva.recurrence_count}</li>` : ""}
+          ` : ""}
         </ul>
         <hr>
         <p>Si considera que esto es un error, contacte a la administración.</p>

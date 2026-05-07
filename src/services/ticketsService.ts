@@ -9,7 +9,7 @@ export const ticketsService = {
       .from("tickets")
       .select(`
         *,
-        usuarios!inner(nombre, email, rol)
+        usuarios!usuario_id(nombre, email, rol)
       `)
       .eq("usuario_id", usuarioId)
       .order("created_at", { ascending: false });
@@ -29,7 +29,7 @@ export const ticketsService = {
       .from("tickets")
       .select(`
         *,
-        usuarios!inner(nombre, email, rol)
+        usuarios!usuario_id(nombre, email, rol)
       `)
       .order("created_at", { ascending: false });
 

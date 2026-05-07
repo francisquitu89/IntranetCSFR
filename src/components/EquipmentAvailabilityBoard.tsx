@@ -47,12 +47,15 @@ export function EquipmentAvailabilityBoard({
           <thead>
             <tr>
               <th className="availability-sticky">Periodo</th>
-              {equipos.map((equipo) => (
-                <th key={equipo.value}>
-                  <span className="availability-room-name">{equipo.label}</span>
-                  <span className="availability-room-meta">Total: {equipo.capacidad} unidades</span>
-                </th>
-              ))}
+              {equipos.map((equipo) => {
+                const cantidadTotal = inventario[equipo.value] ?? equipo.capacidad;
+                return (
+                  <th key={equipo.value}>
+                    <span className="availability-room-name">{equipo.label}</span>
+                    <span className="availability-room-meta">Total: {cantidadTotal} unidades</span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -64,19 +67,20 @@ export function EquipmentAvailabilityBoard({
                 <tr key={slot.label}>
                   <th className="availability-sticky">{slot.label}</th>
                   {equipos.map((equipo) => {
+                    const cantidadTotal = inventario[equipo.value] ?? equipo.capacidad;
                     const reservasDelEquipo = reservas.filter((reserva) => reserva.sala === equipo.value);
                     const reservasEnHorario = reservasDelEquipo.filter((reserva) =>
                       overlaps(reserva, slotStart, slotEnd)
                     );
 
-                    const disponible = equipo.capacidad - reservasEnHorario.length;
-                    const porcentajeOcupado = Math.round((reservasEnHorario.length / equipo.capacidad) * 100);
+                    const disponible = cantidadTotal - reservasEnHorario.length;
+                    const porcentajeOcupado = Math.round((reservasEnHorario.length / cantidadTotal) * 100);
 
                     // Determinar clase CSS basada en disponibilidad
                     let className = "slot-free";
                     if (disponible === 0) {
                       className = "slot-busy";
-                    } else if (disponible < equipo.capacidad * 0.3) {
+                    } else if (disponible < cantidadTotal * 0.3) {
                       className = "slot-warning";
                     }
 
@@ -91,7 +95,7 @@ export function EquipmentAvailabilityBoard({
                         className={className}
                         title={
                           disponible > 0
-                            ? `${equipo.label}\nDisponibles: ${disponible}/${equipo.capacidad}\nOcupados: ${reservasEnHorario.length} (${porcentajeOcupado}%)`
+                            ? `${equipo.label}\nDisponibles: ${disponible}/${cantidadTotal}\nOcupados: ${reservasEnHorario.length} (${porcentajeOcupado}%)`
                             : `${equipo.label}\nSIN DISPONIBILIDAD\nReservados por:\n${usuariosReservando}`
                         }
                         style={{
@@ -107,7 +111,7 @@ export function EquipmentAvailabilityBoard({
                           fontWeight: "900",
                           letterSpacing: "0.5px",
                         }}>
-                          {disponible > 0 ? `${disponible}/${equipo.capacidad}` : "❌"}
+                          {disponible > 0 ? `${disponible}/${cantidadTotal}` : "❌"}
                         </span>
                         <span style={{
                           display: "block",
