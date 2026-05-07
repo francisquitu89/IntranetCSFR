@@ -3,7 +3,7 @@ export type SalaType =
   | "Auditorio Grande"
   | "Auditorio Chico"
   | "Biblioteca (Cuenta Cuentos)"
-  | "Biblioteca (mesas trabajo)"
+  | "Biblioteca (mesas de trabajo)"
   | "Biblioteca"
   | "Biblioteca2"
   | "Capilla"
