@@ -3,7 +3,9 @@ import { Bell, CalendarDays, Ticket, Users, RefreshCw, Trash2, KeyRound, Plus } 
 import { supabase } from "../lib/supabase";
 import { reservasService } from "../services/reservasService";
 import { ticketsService } from "../services/ticketsService";
+import { inventarioService } from "../services/inventarioService";
 import { AvailabilityBoard } from "../components/AvailabilityBoard";
+import { EquipmentAvailabilityBoard } from "../components/EquipmentAvailabilityBoard";
 import { authService } from "../services/authService";
 import { SALAS_CATALOGO } from "../data/salas";
 import type { Reserva, Ticket as TicketType, Usuario } from "../types";
@@ -19,10 +21,13 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [inventario, setInventario] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [adminActionId, setAdminActionId] = useState<string | null>(null);
+  const [respondingTicketId, setRespondingTicketId] = useState<string | null>(null);
+  const [ticketResponse, setTicketResponse] = useState("");
   
   // User creation form state
   const [showCreateUserForm, setShowCreateUserForm] = useState(false);
@@ -39,10 +44,11 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const cargarDatos = async () => {
     try {
       setRefreshing(true);
-      const [reservasDelDia, ticketsGlobales, usuariosGlobales] = await Promise.all([
+      const [reservasDelDia, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
         reservasService.obtenerReservasConfirmadasPorFecha(selectedDate),
         ticketsService.obtenerTodosTickets(),
         supabase.from("usuarios").select("*").order("nombre", { ascending: true }),
+        inventarioService.obtenerInventario(),
       ]);
 
       if (usuariosGlobales.error) throw usuariosGlobales.error;
@@ -50,6 +56,10 @@ export function AdminPage({ usuario }: AdminPageProps) {
       setReservas(reservasDelDia);
       setTickets(ticketsGlobales);
       setUsuarios((usuariosGlobales.data || []) as Usuario[]);
+      
+      const map: Record<string, number> = {};
+      (inventarioRows || []).forEach((it) => (map[it.sala] = it.cantidad));
+      setInventario(map);
     } catch (err: any) {
       setError(err.message || "No se pudieron cargar los datos globales");
     } finally {
@@ -79,6 +89,25 @@ export function AdminPage({ usuario }: AdminPageProps) {
       await authService.cambiarContrasenaTemporalAdmin(usuarioId, "admin123");
     } catch (err: any) {
       setError(err.message || "No se pudo cambiar la contraseña");
+    } finally {
+      setAdminActionId(null);
+    }
+  };
+
+  const handleResponderTicket = async (ticketId: string) => {
+    if (!usuario || !ticketResponse.trim()) {
+      setError("Debe escribir una respuesta");
+      return;
+    }
+
+    try {
+      setAdminActionId(ticketId);
+      await ticketsService.responderTicket(ticketId, ticketResponse, usuario.id);
+      setRespondingTicketId(null);
+      setTicketResponse("");
+      await cargarDatos();
+    } catch (err: any) {
+      setError(err.message || "No se pudo responder el ticket");
     } finally {
       setAdminActionId(null);
     }
@@ -192,18 +221,21 @@ export function AdminPage({ usuario }: AdminPageProps) {
     const reservasActividad = reservas.map((reserva) => ({
       tipo: "Reserva",
       titulo: `${reserva.sala} · ${reserva.estado}`,
+      responsable: reserva.usuario_nombre || "Usuario",
       fecha: reserva.updated_at || reserva.created_at,
     }));
 
     const ticketsActividad = tickets.map((ticket) => ({
       tipo: "Ticket",
       titulo: ticket.asunto,
+      responsable: ticket.usuario_nombre || "Usuario",
       fecha: ticket.updated_at || ticket.created_at,
     }));
 
     const usuariosActividad = usuarios.map((user) => ({
       tipo: "Usuario",
       titulo: user.nombre,
+      responsable: user.nombre,
       fecha: user.created_at,
     }));
 
@@ -378,6 +410,17 @@ export function AdminPage({ usuario }: AdminPageProps) {
           />
         </div>
 
+        <div style={{ marginTop: "1rem" }}>
+          <EquipmentAvailabilityBoard
+            reservas={reservas}
+            equipos={SALAS_CATALOGO.filter(s => s.tipo === "Objeto")}
+            selectedDate={selectedDate}
+            inventario={inventario}
+            title="Disponibilidad de notebooks y tablets"
+            subtitle="Muestra cuántos equipos están disponibles en cada horario del día"
+          />
+        </div>
+
         <div className="grid-2" style={{ marginTop: "1rem" }}>
           <section className="form-card">
             <div className="section-title-wrap">
@@ -392,7 +435,9 @@ export function AdminPage({ usuario }: AdminPageProps) {
                   <span className="tag">{item.tipo}</span>
                   <div>
                     <strong>{item.titulo}</strong>
-                    <div className="muted">{new Date(item.fecha).toLocaleString("es-CL")}</div>
+                    <div className="muted">
+                      <small>{item.responsable}</small> • {new Date(item.fecha).toLocaleString("es-CL")}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -490,14 +535,101 @@ export function AdminPage({ usuario }: AdminPageProps) {
             </div>
             <div className="admin-list">
               {tickets.slice(0, 12).map((ticket) => (
-                <div key={ticket.id} className="admin-row">
-                  <div>
-                    <strong>{ticket.asunto}</strong>
-                    <div className="muted">{ticket.categoria} · {ticket.prioridad}</div>
+                <div key={ticket.id} className="admin-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "1rem", paddingBottom: "1rem", borderBottom: "1px solid #e0e0e0" }}>
+                  <div style={{ width: "100%" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "0.5rem" }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ fontSize: "1.05rem" }}>{ticket.asunto}</strong>
+                        <div className="muted">{ticket.categoria} · {ticket.prioridad}</div>
+                        {ticket.usuario_nombre && (
+                          <div className="muted" style={{ marginTop: "0.25rem" }}>
+                            <strong>Usuario:</strong> {ticket.usuario_nombre}
+                            {ticket.usuario_email && ` (${ticket.usuario_email})`}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                        <span className={`priority-pill ${ticket.prioridad === "Urgente" || ticket.prioridad === "Alta" ? "priority-high" : ticket.prioridad === "Media" ? "priority-med" : "priority-low"}`}>
+                          {ticket.estado}
+                        </span>
+                        <select
+                          value={ticket.estado}
+                          onChange={(e) => {
+                            setAdminActionId(ticket.id);
+                            ticketsService.actualizarTicket(ticket.id, { estado: e.target.value as any })
+                              .then(() => cargarDatos())
+                              .finally(() => setAdminActionId(null));
+                          }}
+                          disabled={adminActionId === ticket.id}
+                          style={{ fontSize: "0.875rem", padding: "0.25rem", borderRadius: "0.25rem" }}
+                          className="select"
+                        >
+                          <option value="Abierto">Abierto</option>
+                          <option value="En Progreso">En Progreso</option>
+                          <option value="Resuelto">Resuelto</option>
+                          <option value="Cerrado">Cerrado</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="muted" style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {ticket.descripcion}
+                    </div>
                   </div>
-                  <span className={`priority-pill ${ticket.prioridad === "Urgente" || ticket.prioridad === "Alta" ? "priority-high" : ticket.prioridad === "Media" ? "priority-med" : "priority-low"}`}>
-                    {ticket.estado}
-                  </span>
+
+                  {respondingTicketId === ticket.id ? (
+                    <div style={{ width: "100%", marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid #e0e0e0" }}>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Responder ticket:</label>
+                      <textarea
+                        value={ticketResponse}
+                        onChange={(e) => setTicketResponse(e.target.value)}
+                        placeholder="Escribe tu respuesta aquí..."
+                        rows={4}
+                        className="textarea"
+                        style={{ marginBottom: "0.5rem" }}
+                      />
+                      <div className="actions" style={{ gap: "0.5rem" }}>
+                        <button
+                          onClick={() => handleResponderTicket(ticket.id)}
+                          disabled={adminActionId === ticket.id || !ticketResponse.trim()}
+                          className="button"
+                          style={{ padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+                        >
+                          {adminActionId === ticket.id ? "Guardando..." : "Guardar respuesta"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRespondingTicketId(null);
+                            setTicketResponse("");
+                          }}
+                          className="button-secondary"
+                          style={{ padding: "0.5rem 1rem", fontSize: "0.9rem" }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ width: "100%", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                      {ticket.respuesta && (
+                        <div style={{ width: "100%", marginBottom: "0.5rem", padding: "0.75rem", backgroundColor: "#f5f5f5", borderRadius: "0.25rem", fontSize: "0.9rem" }}>
+                          <strong>Respuesta del admin:</strong>
+                          <div style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {ticket.respuesta}
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          setRespondingTicketId(ticket.id);
+                          setTicketResponse(ticket.respuesta || "");
+                        }}
+                        className="button-secondary"
+                        style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                      >
+                        {ticket.respuesta ? "Editar respuesta" : "Responder"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

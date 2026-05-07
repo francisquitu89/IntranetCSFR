@@ -7,23 +7,39 @@ export const ticketsService = {
   async obtenerTicketsUsuario(usuarioId: string): Promise<Ticket[]> {
     const { data, error } = await supabase
       .from("tickets")
-      .select("*")
+      .select(`
+        *,
+        usuarios!inner(nombre, email, rol)
+      `)
       .eq("usuario_id", usuarioId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((ticket: any) => ({
+      ...ticket,
+      usuario_nombre: ticket.usuarios?.nombre,
+      usuario_email: ticket.usuarios?.email,
+      usuario_rol: ticket.usuarios?.rol,
+    }));
   },
 
   // Obtener todos los tickets (para funcionarios/admins)
   async obtenerTodosTickets(): Promise<Ticket[]> {
     const { data, error } = await supabase
       .from("tickets")
-      .select("*")
+      .select(`
+        *,
+        usuarios!inner(nombre, email, rol)
+      `)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((ticket: any) => ({
+      ...ticket,
+      usuario_nombre: ticket.usuarios?.nombre,
+      usuario_email: ticket.usuarios?.email,
+      usuario_rol: ticket.usuarios?.rol,
+    }));
   },
 
   // Obtener tickets según el rol del usuario
@@ -128,5 +144,26 @@ export const ticketsService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  // Responder un ticket (solo admin/funcionario)
+  async responderTicket(
+    ticketId: string,
+    respuesta: string,
+    respondidoPorId: string
+  ): Promise<Ticket> {
+    const { data, error } = await supabase
+      .from("tickets")
+      .update({
+        respuesta,
+        respondido_por: respondidoPorId,
+        respondido_en: new Date().toISOString(),
+      })
+      .eq("id", ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 };

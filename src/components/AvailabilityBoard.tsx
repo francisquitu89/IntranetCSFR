@@ -37,7 +37,7 @@ export function AvailabilityBoard({
   salas,
   selectedDate,
   title = "Disponibilidad del día",
-  subtitle = "Verde = libre, rojo = ocupado",
+  subtitle = "Verde = libre, rojo = reservado por...",
 }: AvailabilityBoardProps) {
   const dayLabel = format(new Date(`${selectedDate}T12:00:00`), "EEEE dd MMMM yyyy", {
     locale: es,
@@ -85,11 +85,11 @@ export function AvailabilityBoard({
                         className={isBusy ? "slot-busy" : "slot-free"}
                         title={
                           isBusy
-                            ? `${sala.label} ocupado\n${format(new Date(reservaActiva!.fecha_inicio), "HH:mm")} - ${format(new Date(reservaActiva!.fecha_fin), "HH:mm")}\nReservado por: ${reservaActiva!.usuario_nombre || "Usuario"} (${reservaActiva!.usuario_rol || "?"})\nCorreo: ${reservaActiva!.usuario_email || "N/A"}`
+                            ? `${sala.label} reservado\n${format(new Date(reservaActiva!.fecha_inicio), "HH:mm")} - ${format(new Date(reservaActiva!.fecha_fin), "HH:mm")}\nPor: ${reservaActiva!.usuario_nombre || "Usuario"} (${reservaActiva!.usuario_rol || "?"})\nCorreo: ${reservaActiva!.usuario_email || "N/A"}`
                             : `${sala.label} libre`
                         }
                       >
-                        <span>{isBusy ? "Ocupado" : "Libre"}</span>
+                        <span>{isBusy ? (reservaActiva?.usuario_nombre || "Reservado") : "Libre"}</span>
                       </td>
                     );
                   })}

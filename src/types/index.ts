@@ -70,6 +70,9 @@ export interface Reserva {
 export interface Ticket {
   id: string;
   usuario_id: string;
+  usuario_nombre?: string;
+  usuario_email?: string;
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director";
   sala?: SalaType;
   equipo?: string;
   categoria: TicketCategoryType;
@@ -77,6 +80,9 @@ export interface Ticket {
   descripcion: string;
   prioridad: TicketPriorityType;
   estado: TicketStatusType;
+  respuesta?: string;
+  respondido_por?: string;
+  respondido_en?: string;
   created_at: string;
   updated_at: string;
 }

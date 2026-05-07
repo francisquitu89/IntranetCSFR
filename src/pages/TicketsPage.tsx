@@ -25,7 +25,7 @@ const SALAS: SalaType[] = [
   "Auditorio Grande",
   "Auditorio Chico",
   "Biblioteca (Cuenta Cuentos)",
-  "Biblioteca (mesas trabajo)",
+  "Biblioteca (mesas de trabajo)",
   "Sala VIP",
   "Sala 33",
   "Sala Computación",

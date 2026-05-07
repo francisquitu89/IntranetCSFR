@@ -675,6 +675,12 @@ button {
   font-weight: 700;
 }
 
+.slot-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-weight: 700;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
