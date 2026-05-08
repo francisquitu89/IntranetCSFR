@@ -346,13 +346,14 @@ button {
 .availability-room-name {
   display: block;
   font-weight: 700;
+  color: white;
 }
 
 .availability-room-meta {
   display: block;
   margin-top: 0.2rem;
   font-size: 0.78rem;
-  color: rgba(23, 37, 84, 0.72);
+  color: white;
 }
 
 .admin-row-actions {
