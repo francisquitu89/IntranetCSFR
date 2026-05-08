@@ -6,21 +6,7 @@ export default defineConfig({
   plugins: [react()],
   appType: 'spa',
   server: {
-    configureServer: (server) => {
-      return () => {
-        server.middlewares.use((req, res, next) => {
-          // Redirigir rutas SPA a index.html
-          if (req.method === 'GET' && 
-              !req.url.startsWith('/api') &&
-              !req.url.startsWith('/@') &&
-              !req.url.includes('.') &&
-              req.url !== '/') {
-            req.url = '/'
-          }
-          next()
-        })
-      }
-    }
+    middlewareMode: false,
   },
   preview: {
     port: 4173,
