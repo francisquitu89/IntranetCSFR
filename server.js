@@ -9,32 +9,46 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, 'dist');
 
-// Servir archivos estáticos desde la carpeta dist con caché
+console.log(`📁 Sirviendo desde: ${distPath}`);
+console.log(`🚀 Iniciando servidor en puerto ${PORT}...`);
+
+// Middleware para loggear requests
+app.use((req, res, next) => {
+  console.log(`📍 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Servir archivos estáticos desde la carpeta dist
+// fallthrough: true es CRÍTICO - permite que pase al siguiente middleware si no encuentra el archivo
 app.use(express.static(distPath, {
   maxAge: '1h',
-  etag: false
+  etag: false,
+  fallthrough: true
 }));
 
-// Redirigir CUALQUIER otra ruta a home (/)
-// Esto incluye rutas dinámicas, subrutas inexistentes, etc.
+// Manejo de rutas: redirige dinámicas a /, sirve index.html para /
 app.get('*', (req, res) => {
+  const indexPath = path.join(distPath, 'index.html');
+  
+  if (!fs.existsSync(indexPath)) {
+    console.error(`❌ index.html NO encontrado en: ${indexPath}`);
+    return res.status(404).send('index.html no encontrado en dist/');
+  }
+  
   if (req.path === '/') {
-    // Si es la ruta raíz, servir index.html
-    const indexPath = path.join(distPath, 'index.html');
-    if (!fs.existsSync(indexPath)) {
-      return res.status(404).send('index.html no encontrado en dist/');
-    }
+    // Ruta raíz: servir index.html
+    console.log(`✅ Sirviendo index.html para /`);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.sendFile(indexPath);
   }
   
-  // Todas las demás rutas: redirect 301 a /
-  console.log(`🔄 Redirección: ${req.path} → /`);
-  res.redirect(301, '/');
+  // Cualquier otra ruta: redirigir a / con código 301
+  console.log(`🔄 Redirección 301: ${req.path} → /`);
+  res.status(301).redirect('/');
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Servidor ejecutando en puerto ${PORT}`);
+  console.log(`✅ Servidor escuchando en puerto ${PORT}`);
   console.log(`✅ Rutas dinámicas redirigen a / (código 301)`);
-  console.log(`📁 Sirviendo desde: ${distPath}`);
+  console.log(`✅ Archivos estáticos servidos desde dist/`);
 });
