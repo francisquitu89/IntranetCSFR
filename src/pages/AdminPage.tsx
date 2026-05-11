@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import { reservasService } from "../services/reservasService";
 import { ticketsService } from "../services/ticketsService";
 import { inventarioService } from "../services/inventarioService";
-import { AvailabilityBoard } from "../components/AvailabilityBoard";
+import { AvailabilityBoard, TIME_SLOTS } from "../components/AvailabilityBoard";
 import { EquipmentAvailabilityBoard } from "../components/EquipmentAvailabilityBoard";
 import { authService } from "../services/authService";
 import { SALAS_CATALOGO } from "../data/salas";
@@ -15,6 +15,7 @@ interface AdminPageProps {
 }
 
 const formatLocalDate = () => new Date().toLocaleDateString("en-CA");
+const timeToDateTime = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
 
 export function AdminPage({ usuario }: AdminPageProps) {
   const [selectedDate, setSelectedDate] = useState(formatLocalDate());
@@ -28,6 +29,8 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const [adminActionId, setAdminActionId] = useState<string | null>(null);
   const [respondingTicketId, setRespondingTicketId] = useState<string | null>(null);
   const [ticketResponse, setTicketResponse] = useState("");
+  const [editingReservaId, setEditingReservaId] = useState<string | null>(null);
+  const [editingReserva, setEditingReserva] = useState<Partial<Reserva> & { horarioInicio?: string; horarioFin?: string; fecha?: string }>({});
   
   // User creation form state
   const [showCreateUserForm, setShowCreateUserForm] = useState(false);
@@ -76,6 +79,48 @@ export function AdminPage({ usuario }: AdminPageProps) {
       await reservasService.eliminarReserva(reservaId);
     } catch (err: any) {
       setError(err.message || "No se pudo eliminar la reserva");
+    } finally {
+      setAdminActionId(null);
+    }
+  };
+
+  const handleEditarReserva = (reserva: Reserva) => {
+    const fechaReserva = new Date(reserva.fecha_inicio).toLocaleDateString("en-CA");
+    
+    // Extraer el horario de inicio
+    const horaInicio = new Date(reserva.fecha_inicio).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const slotInicio = TIME_SLOTS.find(slot => slot.start === horaInicio);
+    
+    // Extraer el horario de fin
+    const horaFin = new Date(reserva.fecha_fin).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", hour12: false });
+    const slotFin = TIME_SLOTS.find(slot => slot.end === horaFin);
+    
+    setEditingReservaId(reserva.id);
+    setEditingReserva({
+      fecha: fechaReserva,
+      horarioInicio: slotInicio?.start || "",
+      horarioFin: slotFin?.end || "",
+    });
+  };
+
+  const handleGuardarReserva = async (reservaId: string) => {
+    if (!editingReserva.horarioInicio || !editingReserva.horarioFin || !editingReserva.fecha) {
+      setError("Debes seleccionar fecha, horario inicio y fin");
+      return;
+    }
+
+    try {
+      setAdminActionId(reservaId);
+      
+      await reservasService.actualizarReservaAdmin(reservaId, {
+        fecha_inicio: timeToDateTime(editingReserva.fecha, editingReserva.horarioInicio),
+        fecha_fin: timeToDateTime(editingReserva.fecha, editingReserva.horarioFin),
+      });
+      
+      await cargarDatos();
+      setEditingReservaId(null);
+    } catch (err: any) {
+      setError(err.message || "No se pudo actualizar la reserva");
     } finally {
       setAdminActionId(null);
     }
@@ -571,29 +616,116 @@ export function AdminPage({ usuario }: AdminPageProps) {
             </div>
             <div className="admin-list">
               {reservas.map((reserva) => (
-                <div key={reserva.id} className="admin-row">
-                  <div>
-                    <strong>{reserva.sala}</strong>
-                    <div className="muted">
-                      {new Date(reserva.fecha_inicio).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-                      {" - "}
-                      {new Date(reserva.fecha_fin).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                <div key={reserva.id} className="admin-row" style={{ flexDirection: "column", gap: "1rem" }}>
+                  <div style={{ width: "100%" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "0.5rem" }}>
+                      <div>
+                        <strong>{reserva.sala}</strong>
+                        {reserva.usuario_nombre && (
+                          <div className="muted" style={{ marginTop: "0.25rem" }}>
+                            👤 <strong>{reserva.usuario_nombre}</strong>
+                            {reserva.usuario_email && ` (${reserva.usuario_email})`}
+                          </div>
+                        )}
+                        <div className="muted">
+                          {new Date(reserva.fecha_inicio).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                          {" - "}
+                          {new Date(reserva.fecha_fin).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </div>
+                      <span className={`status-pill ${reserva.estado === "confirmada" ? "status-ok" : "status-bad"}`}>
+                        {reserva.estado}
+                      </span>
                     </div>
                   </div>
-                  <div className="admin-row-actions">
-                    <span className={`status-pill ${reserva.estado === "confirmada" ? "status-ok" : "status-bad"}`}>
-                      {reserva.estado}
-                    </span>
-                    <button
-                      type="button"
-                      className="button-danger"
-                      onClick={() => handleEliminarReserva(reserva.id)}
-                      disabled={adminActionId === reserva.id}
-                    >
-                      <Trash2 size={16} />
-                      Eliminar
-                    </button>
-                  </div>
+
+                  {editingReservaId === reserva.id ? (
+                    <div style={{ width: "100%", padding: "1rem", backgroundColor: "#f9f9f9", borderRadius: "0.5rem", gap: "1rem", display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
+                      <div className="field">
+                        <label>Fecha</label>
+                        <input
+                          type="date"
+                          value={editingReserva.fecha || ""}
+                          onChange={(e) => setEditingReserva({ ...editingReserva, fecha: e.target.value })}
+                          className="input"
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Horario inicio</label>
+                        <select
+                          value={editingReserva.horarioInicio || ""}
+                          onChange={(e) => setEditingReserva({ ...editingReserva, horarioInicio: e.target.value, horarioFin: "" })}
+                          className="select"
+                        >
+                          <option value="">Selecciona un bloque...</option>
+                          {TIME_SLOTS.map((slot) => (
+                            <option key={slot.label} value={slot.start}>
+                              {slot.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Horario fin</label>
+                        <select
+                          value={editingReserva.horarioFin || ""}
+                          onChange={(e) => setEditingReserva({ ...editingReserva, horarioFin: e.target.value })}
+                          disabled={!editingReserva.horarioInicio}
+                          className="select"
+                        >
+                          <option value="">Selecciona el bloque final...</option>
+                          {editingReserva.horarioInicio
+                            ? TIME_SLOTS.slice(TIME_SLOTS.findIndex((s) => s.start === editingReserva.horarioInicio)).map((slot) => (
+                                <option key={slot.label} value={slot.end}>
+                                  {slot.label}
+                                </option>
+                              ))
+                            : TIME_SLOTS.map((slot) => (
+                                <option key={slot.label} value={slot.end}>
+                                  {slot.label}
+                                </option>
+                              ))}
+                        </select>
+                      </div>
+                      <div style={{ gridColumn: "1 / -1", display: "flex", gap: "0.5rem" }}>
+                        <button
+                          onClick={() => handleGuardarReserva(reserva.id)}
+                          disabled={adminActionId === reserva.id}
+                          className="button"
+                          style={{ flex: 1 }}
+                        >
+                          {adminActionId === reserva.id ? "Guardando..." : "Guardar cambios"}
+                        </button>
+                        <button
+                          onClick={() => setEditingReservaId(null)}
+                          className="button-secondary"
+                          style={{ flex: 1 }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="admin-row-actions">
+                      <button
+                        type="button"
+                        className="button"
+                        onClick={() => handleEditarReserva(reserva)}
+                        disabled={adminActionId === reserva.id}
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        type="button"
+                        className="button-danger"
+                        onClick={() => handleEliminarReserva(reserva.id)}
+                        disabled={adminActionId === reserva.id}
+                      >
+                        <Trash2 size={16} />
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

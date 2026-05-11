@@ -1,6 +1,7 @@
 import type { Reserva, Ticket, Usuario } from "../types";
 
-const DEFAULT_CC_EMAIL = "reservas@csfr.cl";
+const DEFAULT_CC_RESERVAS = "dperez@csfr.cl, soporte@csfr.cl";
+const DEFAULT_CC_TICKETS = "dperez@csfr.cl, ependas@csfr.cl, soporte@csfr.cl";
 
 interface EmailPayload {
   destinatario: string;
@@ -57,7 +58,7 @@ export const notificarReserva = async (
   try {
     await registrarNotificacion({
       destinatario: usuario.email || "",
-      cc: DEFAULT_CC_EMAIL,
+      cc: DEFAULT_CC_RESERVAS,
       asunto: `Reserva Confirmada - ${reserva.sala}`,
       cuerpo_html: cuerpoHtml,
       cuerpo_texto: `Reserva confirmada para ${reserva.sala}`,
@@ -106,7 +107,7 @@ export const notificarTicket = async (
   try {
     await registrarNotificacion({
       destinatario: usuario.email || "",
-      cc: DEFAULT_CC_EMAIL,
+      cc: DEFAULT_CC_TICKETS,
       asunto: `Ticket ${accionTexto} - ${ticket.asunto}`,
       cuerpo_html: cuerpoHtml,
       cuerpo_texto: `Ticket ${accionTexto}: ${ticket.asunto}`,
@@ -161,7 +162,7 @@ export const notificarCancelacionReserva = async (
   try {
     await registrarNotificacion({
       destinatario: usuario.email || "",
-      cc: DEFAULT_CC_EMAIL,
+      cc: DEFAULT_CC_RESERVAS,
       asunto: `Reserva Cancelada - ${reserva.sala}`,
       cuerpo_html: cuerpoHtml,
       cuerpo_texto: `Reserva cancelada para ${reserva.sala}`,
@@ -180,25 +181,34 @@ async function registrarNotificacion(email: EmailPayload) {
     throw new Error("Falta VITE_SUPABASE_ANON_KEY para enviar notificaciones");
   }
 
-  const response = await fetch(functionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
-    },
-    body: JSON.stringify({
-      destinatario: email.destinatario,
-      cc: email.cc ?? DEFAULT_CC_EMAIL,
-      asunto: email.asunto,
-      cuerpo_html: email.cuerpo_html,
-      cuerpo_texto: email.cuerpo_texto,
-    }),
-  });
+  try {
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        destinatario: email.destinatario,
+        cc: email.cc,
+        asunto: email.asunto,
+        cuerpo_html: email.cuerpo_html,
+        cuerpo_texto: email.cuerpo_texto,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `Error HTTP ${response.status} al enviar notificación`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error HTTP ${response.status}:`, errorText);
+      throw new Error(errorText || `Error HTTP ${response.status} al enviar notificación`);
+    }
+
+    const result = await response.json();
+    console.log("✅ Notificación enviada:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error al registrar notificación:", error);
+    throw error;
   }
 }
 

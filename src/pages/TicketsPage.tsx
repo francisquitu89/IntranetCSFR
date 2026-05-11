@@ -293,6 +293,13 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
 
               <p className="muted" style={{ wordBreak: "break-word" }}>{ticket.descripcion}</p>
 
+              {ticket.usuario_nombre && (canUpdateTickets || usuario?.id === ticket.usuario_id) && (
+                <div style={{ marginTop: "0.75rem", padding: "0.5rem", backgroundColor: "#f5f5f5", borderRadius: "0.25rem", fontSize: "0.875rem" }}>
+                  <span className="muted">Creado por:</span> <strong>{ticket.usuario_nombre}</strong>
+                  {ticket.usuario_rol && <span className="muted" style={{ marginLeft: "0.5rem" }}>({ticket.usuario_rol})</span>}
+                </div>
+              )}
+
               {ticket.respuesta && (
                 <div style={{ marginTop: "1rem", padding: "0.75rem", backgroundColor: "#f0f8ff", borderLeft: "4px solid #2563eb", borderRadius: "0.25rem" }}>
                   <p style={{ margin: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: "600", color: "#2563eb" }}>

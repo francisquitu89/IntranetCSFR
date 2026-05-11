@@ -346,6 +346,11 @@ export const reservasService = {
     };
   },
 
+  // Actualizar reserva desde admin panel (alias)
+  async actualizarReservaAdmin(reservaId: string, updates: Partial<Reserva>): Promise<Reserva> {
+    return this.actualizarReserva(reservaId, updates);
+  },
+
   // Obtener reservas por sala
   async obtenerReservasPorSala(sala: SalaType): Promise<Reserva[]> {
     const { data, error } = await supabase

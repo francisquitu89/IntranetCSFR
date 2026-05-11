@@ -20,6 +20,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verificación de seguridad: validar que la request sea legítima
+    const origin = req.headers.get("origin");
+    const referer = req.headers.get("referer");
+    const allowedOrigins = ["http://localhost:5173", "https://csfr.cl", "https://www.csfr.cl", "https://intranet.csfr.cl"];
+    
+    // En desarrollo, permitir localhost; en producción, validar origen
+    const isValidOrigin = !origin || allowedOrigins.some(ao => origin.includes(ao));
+    
+    if (!isValidOrigin && origin) {
+      console.warn(`⚠️ Request desde origen no permitido: ${origin}`);
+      // No bloquear pero log para seguridad
+    }
+
     const payload = (await req.json()) as NotificationRequest;
 
     if (!payload.destinatario || !payload.asunto || !payload.cuerpo_html || !payload.cuerpo_texto) {
