@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useNavigation } from "../contexts/NavigationContext";
 import type { Usuario } from "../types";
 import { Calendar, AlertCircle, Building2 } from "lucide-react";
 
@@ -8,7 +8,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ usuario }: HomePageProps) {
-  const navigate = useNavigate();
+  const { navigate } = useNavigation();
   const [showPasswordReminder, setShowPasswordReminder] = useState(false);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function HomePage({ usuario }: HomePageProps) {
   };
 
   const handleGoToChangePassword = () => {
-    navigate("/cambiar-contrasena");
+    navigate("cambiar-contrasena");
     handlePasswordReminderDismiss();
   };
 
@@ -47,7 +47,7 @@ export function HomePage({ usuario }: HomePageProps) {
               interfaz moderna y de colores institucionales.
             </p>
             <div className="hero-actions">
-              <Link to="/login" className="button">Entrar ahora</Link>
+              <button type="button" className="button" onClick={() => navigate("login")}>Entrar ahora</button>
             </div>
           </section>
 
@@ -103,7 +103,7 @@ export function HomePage({ usuario }: HomePageProps) {
           </p>
           <div className="hero-actions">
             {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
-              <Link to="/admin" className="button">Abrir Admin</Link>
+              <button type="button" className="button" onClick={() => navigate("admin")}>Abrir Admin</button>
             )}
           </div>
         </section>
@@ -117,24 +117,39 @@ export function HomePage({ usuario }: HomePageProps) {
           </div>
 
           <div className="grid-3">
-            <Link to="/reservas" className="feature-card">
+            <div className="feature-card" onClick={() => navigate("reservas")} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div className="feature-icon blue"><Calendar size={22} /></div>
-              <h3 className="card-title">Reservas</h3>
-              <p className="muted">Gestiona salas y equipos del colegio con confirmación automática.</p>
-            </Link>
+              <div>
+                <h3 className="card-title">Reservas</h3>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <span style={{ color: "#1e293b", fontSize: "1.75rem", lineHeight: "1.2", flexShrink: 0, fontWeight: "bold" }}>•</span>
+                  <p className="muted" style={{ margin: 0, lineHeight: "1.5" }}>Gestiona salas y equipos del colegio con confirmación automática.</p>
+                </div>
+              </div>
+            </div>
 
-            <Link to="/tickets" className="feature-card">
+            <div className="feature-card" onClick={() => navigate("tickets")} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div className="feature-icon orange"><AlertCircle size={22} /></div>
-              <h3 className="card-title">Tickets</h3>
-              <p className="muted">Crea solicitudes de soporte con prioridad y categoría clara.</p>
-            </Link>
+              <div>
+                <h3 className="card-title">Tickets</h3>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <span style={{ color: "#1e293b", fontSize: "1.75rem", lineHeight: "1.2", flexShrink: 0, fontWeight: "bold" }}>•</span>
+                  <p className="muted" style={{ margin: 0, lineHeight: "1.5" }}>Crea solicitudes de soporte con prioridad y categoría clara.</p>
+                </div>
+              </div>
+            </div>
 
             {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
-              <Link to="/admin" className="feature-card">
+              <div className="feature-card" onClick={() => navigate("admin")} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div className="feature-icon green"><Building2 size={22} /></div>
-                <h3 className="card-title">Administración</h3>
-                <p className="muted">Panel para supervisar usuarios, reservas y tickets.</p>
-              </Link>
+                <div>
+                  <h3 className="card-title">Administración</h3>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", marginTop: "0.5rem" }}>
+                    <span style={{ color: "#1e293b", fontSize: "1.75rem", lineHeight: "1.2", flexShrink: 0, fontWeight: "bold" }}>•</span>
+                    <p className="muted" style={{ margin: 0, lineHeight: "1.5" }}>Panel para supervisar usuarios, reservas y tickets.</p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </section>

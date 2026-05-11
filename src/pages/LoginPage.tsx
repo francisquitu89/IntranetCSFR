@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { authService } from "../services/authService";
 import type { Usuario } from "../types";
 
@@ -12,7 +11,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +28,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           created_at: new Date().toISOString(),
         });
       }
-      navigate("/reservas");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión");
     } finally {

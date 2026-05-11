@@ -426,18 +426,30 @@ export function AdminPage({ usuario }: AdminPageProps) {
             <div className="section-title-wrap">
               <div>
                 <h2 className="section-title">⚙️ Gestión de inventario</h2>
-                <p className="section-subtitle">Ajusta dinámicamente la cantidad de equipos disponibles.</p>
+                <p className="section-subtitle">Ajusta dinámicamente la cantidad de equipos disponibles. Los números se actualizan según las reservas del día.</p>
               </div>
             </div>
             <div className="grid-2" style={{ gap: "1rem" }}>
               {SALAS_CATALOGO.filter(s => s.tipo === "Objeto").map((equipo) => {
                 const cantidadActual = inventario[equipo.value] || 0;
+                
+                // Calcular dinámicamente cuántos están reservados hoy
+                const reservasDelEquipoHoy = reservas.filter(r => r.sala === equipo.value);
+                const cantidadReservada = reservasDelEquipoHoy.reduce((acc, r) => acc + (r.cantidad || 1), 0);
+                const disponibleAhora = Math.max(0, cantidadActual - cantidadReservada);
+                
                 return (
                   <div key={equipo.value} style={{ padding: "1rem", border: "1px solid #e0e0e0", borderRadius: "0.5rem" }}>
                     <div style={{ marginBottom: "1rem" }}>
                       <h4 style={{ margin: "0 0 0.5rem" }}>{equipo.label}</h4>
-                      <p style={{ margin: 0, fontSize: "0.9rem", color: "#666" }}>
-                        Disponibles: <strong style={{ fontSize: "1.5rem", color: cantidadActual > 0 ? "#28a745" : "#dc3545" }}>{cantidadActual}</strong> de {equipo.capacidad}
+                      <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "#666" }}>
+                        Inventario total: <strong style={{ fontSize: "1.2rem", color: "#333" }}>{cantidadActual}</strong> unidades
+                      </p>
+                      <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "#666" }}>
+                        Reservadas hoy: <strong style={{ fontSize: "1.2rem", color: cantidadReservada > 0 ? "#ff9800" : "#666" }}>{cantidadReservada}</strong>
+                      </p>
+                      <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", color: "#666" }}>
+                        Disponibles ahora: <strong style={{ fontSize: "1.2rem", color: disponibleAhora > 0 ? "#28a745" : "#dc3545" }}>{disponibleAhora}</strong>
                       </p>
                     </div>
                     <div className="actions" style={{ gap: "0.5rem" }}>

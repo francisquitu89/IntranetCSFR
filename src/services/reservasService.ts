@@ -142,7 +142,8 @@ export const reservasService = {
     descripcion?: string,
     recurrenceType?: "none" | "weekly" | "monthly" | "yearly",
     recurrenceEndDate?: string,
-    recurrenceCount?: number
+    recurrenceCount?: number,
+    cantidad?: number
   ): Promise<Reserva> {
     const { data: usuario } = await supabase
       .from("usuarios")
@@ -160,6 +161,7 @@ export const reservasService = {
           fecha_inicio: fechaInicio,
           fecha_fin: fechaFin,
           descripcion,
+          cantidad: cantidad || 1,
           estado: "confirmada",
           recurrence_type: "none",
         })

@@ -1,11 +1,4 @@
 import { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { Navigation } from "./components/Navigation";
 import { BackButton } from "./components/BackButton";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -14,11 +7,13 @@ import { ReservasPage } from "./pages/ReservasPage";
 import { TicketsPage } from "./pages/TicketsPage";
 import { AdminPage } from "./pages/AdminPage";
 import { CambiarContrasenaPage } from "./pages/CambiarContrasenaPage";
+import { NavigationProvider, useNavigation } from "./contexts/NavigationContext";
 import { authService } from "./services/authService";
 import type { Usuario } from "./types";
 import "./App.css";
 
-function App() {
+function AppContent() {
+  const { currentPage, navigate } = useNavigation();
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +36,7 @@ function App() {
       if (sesion) {
         const user = await authService.usuarioActual();
         setUsuario(user);
+        navigate("home");
       }
     } catch (error) {
       console.log("No hay sesión activa");
@@ -53,6 +49,7 @@ function App() {
     setUsuario(nuevoUsuario);
     localStorage.setItem("ssff_temp_user", JSON.stringify(nuevoUsuario));
     localStorage.setItem("ssff_temp_user_needs_pwd_change", "true");
+    navigate("home");
   };
 
   const handleLogout = async () => {
@@ -61,6 +58,7 @@ function App() {
     } finally {
       setUsuario(null);
       localStorage.removeItem("ssff_temp_user");
+      navigate("login");
     }
   };
 
@@ -87,62 +85,71 @@ function App() {
     );
   }
 
+  // Renderizar página según currentPage
+  let pageComponent = null;
+
+  if (!usuario) {
+    // Si no hay usuario, mostrar login o registro
+    if (currentPage === "registro") {
+      pageComponent = <RegistroPage onRegistroSuccess={() => navigate("login")} />;
+    } else {
+      pageComponent = <LoginPage onLogin={handleLogin} />;
+    }
+  } else {
+    // Si hay usuario autenticado
+    switch (currentPage) {
+      case "home":
+        pageComponent = <HomePage usuario={usuario} />;
+        break;
+      case "reservas":
+        pageComponent = <ReservasPage usuario={usuario} />;
+        break;
+      case "tickets":
+        pageComponent = <TicketsPage usuario={usuario} />;
+        break;
+      case "admin":
+        pageComponent = canViewAdmin ? (
+          <AdminPage usuario={usuario} />
+        ) : (
+          <HomePage usuario={usuario} />
+        );
+        break;
+      case "cambiar-contrasena":
+        pageComponent = <CambiarContrasenaPage usuario={usuario} />;
+        break;
+      default:
+        pageComponent = <HomePage usuario={usuario} />;
+    }
+  }
+
   return (
-    <Router>
-      <div className="app-shell">
-        <Navigation />
-        <BackButton />
-        {usuario && (
-          <div className="container-max" style={{ paddingTop: "1rem" }}>
-            <div className="top-actions-bar">
-              <button type="button" className="button-secondary" onClick={() => void handleLogout()}>
-                Cerrar sesión
-              </button>
-              <RoutePathHint usuario={usuario} />
+    <div className="app-shell">
+      <BackButton />
+      {usuario && (
+        <div className="container-max" style={{ paddingTop: "1rem" }}>
+          <div className="top-actions-bar">
+            <button type="button" className="button-secondary" onClick={() => void handleLogout()}>
+              Cerrar sesión
+            </button>
+            <div className="muted" style={{ textAlign: "right" }}>
+              {usuario.nombre} · {usuario.rol}
             </div>
           </div>
-        )}
-        <div className="app-content">
-          <Routes>
-            <Route path="/" element={<HomePage usuario={usuario} />} />
-            <Route
-              path="/login"
-              element={usuario ? <Navigate to="/" replace /> : <LoginPage onLogin={handleLogin} />}
-            />
-            <Route
-              path="/registro"
-              element={usuario ? <Navigate to="/" replace /> : <RegistroPage />}
-            />
-            <Route
-              path="/reservas"
-              element={usuario ? <ReservasPage usuario={usuario} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/tickets"
-              element={usuario ? <TicketsPage usuario={usuario} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/admin"
-              element={usuario && canViewAdmin ? <AdminPage usuario={usuario} /> : <Navigate to="/" replace />}
-            />
-            <Route
-              path="/cambiar-contrasena"
-              element={usuario ? <CambiarContrasenaPage usuario={usuario} /> : <Navigate to="/login" replace />}
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
         </div>
+      )}
+      <div className="app-content">
+        {pageComponent}
       </div>
-    </Router>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <NavigationProvider>
+      <AppContent />
+    </NavigationProvider>
   );
 }
 
 export default App;
-
-function RoutePathHint({ usuario }: { usuario: Usuario }) {
-  return (
-    <div className="muted" style={{ textAlign: "right" }}>
-      {usuario.nombre} · {usuario.rol}
-    </div>
-  );
-}

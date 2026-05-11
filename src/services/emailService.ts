@@ -1,6 +1,6 @@
 import type { Reserva, Ticket, Usuario } from "../types";
 
-const DEFAULT_CC_EMAIL = "dperez@csfr.cl";
+const DEFAULT_CC_EMAIL = "reservas@csfr.cl";
 
 interface EmailPayload {
   destinatario: string;

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 import { authService } from "../services/authService";
+import { useNavigation } from "../contexts/NavigationContext";
 
-export function RegistroPage() {
+export function RegistroPage({ onRegistroSuccess }: { onRegistroSuccess?: () => void }) {
+  const { navigate } = useNavigation();
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -14,7 +15,6 @@ export function RegistroPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -44,7 +44,11 @@ export function RegistroPage() {
         formData.departamento,
         formData.telefono
       );
-      navigate("/login");
+      if (onRegistroSuccess) {
+        onRegistroSuccess();
+      } else {
+        navigate("login");
+      }
     } catch (err: any) {
       setError(err.message || "Error al registrar");
     } finally {
@@ -118,7 +122,7 @@ export function RegistroPage() {
             </button>
 
             <p className="section-subtitle" style={{ marginTop: "0.5rem", textAlign: "center" }}>
-              ¿Ya tienes cuenta? <Link to="/login" style={{ color: "#7dd3fc", fontWeight: 700 }}>Inicia sesión</Link>
+              ¿Ya tienes cuenta? <button type="button" onClick={() => navigate("login")} style={{ color: "#7dd3fc", fontWeight: 700, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Inicia sesión</button>
             </p>
           </form>
         </section>

@@ -73,8 +73,9 @@ export function EquipmentAvailabilityBoard({
                       overlaps(reserva, slotStart, slotEnd)
                     );
 
-                    const disponible = cantidadTotal - reservasEnHorario.length;
-                    const porcentajeOcupado = Math.round((reservasEnHorario.length / cantidadTotal) * 100);
+                    const cantidadReservada = reservasEnHorario.reduce((acc, r) => acc + (r.cantidad || 1), 0);
+                    const disponible = cantidadTotal - cantidadReservada;
+                    const porcentajeOcupado = Math.round((cantidadReservada / cantidadTotal) * 100);
 
                     // Determinar clase CSS basada en disponibilidad
                     let className = "slot-free";
@@ -86,7 +87,7 @@ export function EquipmentAvailabilityBoard({
 
                     // Crear lista de quiénes tienen reserva en este horario
                     const usuariosReservando = reservasEnHorario
-                      .map((r) => `${r.usuario_nombre || "Usuario"} (${r.usuario_rol || "?"})`)
+                      .map((r) => `${r.usuario_nombre || "Usuario"} (${r.usuario_rol || "?"}) - ${r.cantidad || 1} ${r.cantidad && r.cantidad > 1 ? "dispositivos" : "dispositivo"}`)
                       .join("\n");
 
                     return (

@@ -15,7 +15,16 @@ app.use(express.static(distPath, {
   etag: false
 }));
 
-// Manejar todas las rutas SPA: redirigir a index.html
+// Rutas antiguas conocidas: redirigir explícitamente a home
+// Esto proporciona un mejor SEO y es más claro
+const rutasAntiguas = ['/reservas', '/tickets', '/admin'];
+app.get(rutasAntiguas, (req, res) => {
+  console.log(`🔄 Redirección de ruta antigua: ${req.path} → /`);
+  res.redirect(301, '/');
+});
+
+// Manejar todas las demás rutas SPA: servir index.html
+// Esto permite que React Router maneje la navegación interna
 app.get('*', (req, res) => {
   const indexPath = path.join(distPath, 'index.html');
   
@@ -32,5 +41,5 @@ app.listen(PORT, () => {
   console.log(`✅ Servidor ejecutando en puerto ${PORT}`);
   console.log(`✅ SPA routing configurado`);
   console.log(`📁 Sirviendo desde: ${distPath}`);
-});
+  console.log(`🔄 Redirecciones de rutas antiguas habilitadas: ${rutasAntiguas.join(', ')}`);
 });

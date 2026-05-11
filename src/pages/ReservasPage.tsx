@@ -41,6 +41,7 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
     recurrenceType: "none" as RecurrenceType,
     recurrenceEndDate: "",
     recurrenceCount: 1,
+    cantidad: 1,
   });
   const [inventario, setInventario] = useState<Record<string, number>>({});
   const [editingReservaId, setEditingReservaId] = useState<string | null>(null);
@@ -191,10 +192,11 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
       });
 
       const cantidadActual = inventario[formData.sala] ?? SALAS_CATALOGO.find(s => s.value === formData.sala)?.capacidad ?? 0;
-      const disponible = cantidadActual - reservasEnHorario.length;
+      const cantidadReservada = reservasEnHorario.reduce((acc, r) => acc + (r.cantidad || 1), 0);
+      const disponible = cantidadActual - cantidadReservada;
 
-      if (disponible <= 0) {
-        setError("No hay equipos disponibles en este horario.");
+      if (disponible < formData.cantidad) {
+        setError(`Solo hay ${disponible} dispositivo(s) disponible(s) en este horario.`);
         return;
       }
     }
@@ -214,7 +216,8 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
         formData.descripcion,
         tipoReserva === "espacio" && formData.recurrenceType !== "none" ? formData.recurrenceType : undefined,
         tipoReserva === "espacio" && formData.recurrenceType !== "none" ? formData.recurrenceEndDate || undefined : undefined,
-        tipoReserva === "espacio" && formData.recurrenceType !== "none" && formData.recurrenceCount > 1 ? formData.recurrenceCount : undefined
+        tipoReserva === "espacio" && formData.recurrenceType !== "none" && formData.recurrenceCount > 1 ? formData.recurrenceCount : undefined,
+        tipoReserva === "objeto" ? formData.cantidad : undefined
       );
 
       setFormData({
@@ -225,6 +228,7 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
         recurrenceType: "none",
         recurrenceEndDate: "",
         recurrenceCount: 1,
+        cantidad: 1,
       });
       setShowForm(false);
 
@@ -484,6 +488,20 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                 />
               </div>
 
+              {tipoReserva === "objeto" && (
+                <div className="field">
+                  <label>Cantidad de dispositivos</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={inventario[formData.sala] ?? 10}
+                    value={formData.cantidad}
+                    onChange={(e) => setFormData({ ...formData, cantidad: Math.max(1, parseInt(e.target.value) || 1) })}
+                    className="input"
+                  />
+                </div>
+              )}
+
               {/* Campos de recurrencia - solo para espacios */}
               {tipoReserva === "espacio" && (
                 <>
@@ -521,7 +539,11 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
               <div className="actions">
                 <button 
                   type="submit" 
-                  disabled={loading || !salaDisponible(formData.sala) || (tipoReserva === "espacio" && !formData.horarioInicio)} 
+                  disabled={
+                    loading 
+                    || (tipoReserva === "espacio" && (!formData.horarioInicio || !salaDisponible(formData.sala)))
+                    || (tipoReserva === "objeto" && (!formData.horarioInicio || !formData.horarioFin || formData.cantidad < 1))
+                  } 
                   className="button"
                 >
                   {loading ? "Guardando..." : "Guardar reserva"}

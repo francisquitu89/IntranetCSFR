@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigation } from "../contexts/NavigationContext";
 import { authService } from "../services/authService";
 import type { Usuario } from "../types";
 
@@ -8,6 +8,7 @@ interface CambiarContrasenaPageProps {
 }
 
 export function CambiarContrasenaPage({ usuario }: CambiarContrasenaPageProps) {
+  const { navigate } = useNavigation();
   const [formData, setFormData] = useState({
     passwordActual: "",
     nuevaPassword: "",
@@ -16,7 +17,6 @@ export function CambiarContrasenaPage({ usuario }: CambiarContrasenaPageProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   if (!usuario) {
     return null;
@@ -48,7 +48,7 @@ export function CambiarContrasenaPage({ usuario }: CambiarContrasenaPageProps) {
 
       setSuccess("Contraseña actualizada correctamente.");
       setFormData({ passwordActual: "", nuevaPassword: "", confirmarPassword: "" });
-      setTimeout(() => navigate("/"), 1200);
+      setTimeout(() => navigate("home"), 1200);
     } catch (err: any) {
       setError(err.message || "No se pudo cambiar la contraseña");
     } finally {
@@ -66,7 +66,7 @@ export function CambiarContrasenaPage({ usuario }: CambiarContrasenaPageProps) {
             {usuario.nombre}, aquí puedes actualizar la contraseña temporal que usas para entrar.
           </p>
           <div className="hero-actions">
-            <Link to="/" className="button-secondary">Volver al inicio</Link>
+            <button type="button" className="button-secondary" onClick={() => navigate("home")}>Volver al inicio</button>
           </div>
         </section>
 
