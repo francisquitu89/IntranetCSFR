@@ -58,6 +58,7 @@ export interface Reserva {
   fecha_inicio: string;
   fecha_fin: string;
   descripcion?: string;
+  cantidad?: number;
   estado: "confirmada" | "cancelada" | "pendiente";
   recurrence_type?: "none" | "weekly" | "monthly" | "yearly";
   recurrence_end_date?: string;
