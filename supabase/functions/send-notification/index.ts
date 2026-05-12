@@ -3,7 +3,7 @@ import nodemailer from "npm:nodemailer@6.10.1";
 
 interface NotificationRequest {
   destinatario: string;
-  cc?: string;
+  cc?: string | string[];
   asunto: string;
   cuerpo_html: string;
   cuerpo_texto: string;
@@ -46,6 +46,16 @@ Deno.serve(async (req) => {
     const mailFromEmail = Deno.env.get("MAIL_FROM_EMAIL") ?? "reservas@csfr.cl";
     const mailFromName = Deno.env.get("MAIL_FROM_NAME") ?? "Intranet de CSFR";
 
+    // Función auxiliar para convertir cc a array
+    const parseCcArray = (cc: string | string[] | undefined): string[] | undefined => {
+      if (!cc) return undefined;
+      if (Array.isArray(cc)) return cc;
+      // Si es string, separar por comas y limpiar espacios
+      return cc.split(",").map(email => email.trim()).filter(email => email.length > 0);
+    };
+
+    const ccArray = parseCcArray(payload.cc);
+
     // Intentar primero con Resend
     if (resendApiKey) {
       try {
@@ -53,7 +63,8 @@ Deno.serve(async (req) => {
         await resend.emails.send({
           from: `"${mailFromName}" <${mailFromEmail}>`,
           to: payload.destinatario,
-          cc: payload.cc || undefined,
+          cc: ccArray,
+          bcc: ["reservas@csfr.cl"], // Copia interna permanente
           subject: payload.asunto,
           html: payload.cuerpo_html,
           text: payload.cuerpo_texto,
@@ -86,7 +97,8 @@ Deno.serve(async (req) => {
         await transporter.sendMail({
           from: `"${mailFromName}" <${gmailUser}>`,
           to: payload.destinatario,
-          cc: payload.cc || undefined,
+          cc: ccArray,
+          bcc: ["reservas@csfr.cl"], // Copia interna permanente
           subject: payload.asunto,
           text: payload.cuerpo_texto,
           html: payload.cuerpo_html,
