@@ -166,4 +166,14 @@ export const ticketsService = {
     if (error) throw error;
     return data;
   },
+
+  // Eliminar un ticket (solo admin)
+  async eliminarTicket(ticketId: string): Promise<void> {
+    const { error } = await supabase
+      .from("tickets")
+      .delete()
+      .eq("id", ticketId);
+
+    if (error) throw error;
+  },
 };

@@ -84,6 +84,20 @@ export function AdminPage({ usuario }: AdminPageProps) {
     }
   };
 
+  const handleEliminarTicket = async (ticketId: string) => {
+    if (!confirm("¿Eliminar este ticket definitivamente?")) return;
+
+    try {
+      setAdminActionId(ticketId);
+      await ticketsService.eliminarTicket(ticketId);
+      await cargarDatos();
+    } catch (err: any) {
+      setError(err.message || "No se pudo eliminar el ticket");
+    } finally {
+      setAdminActionId(null);
+    }
+  };
+
   const handleEditarReserva = (reserva: Reserva) => {
     const fechaReserva = new Date(reserva.fecha_inicio).toLocaleDateString("en-CA");
     
@@ -814,25 +828,40 @@ export function AdminPage({ usuario }: AdminPageProps) {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ width: "100%", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      {ticket.respuesta && (
-                        <div style={{ width: "100%", marginBottom: "0.5rem", padding: "0.75rem", backgroundColor: "#f5f5f5", borderRadius: "0.25rem", fontSize: "0.9rem" }}>
-                          <strong>Respuesta del admin:</strong>
-                          <div style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                            {ticket.respuesta}
+                    <div style={{ width: "100%", display: "flex", gap: "0.5rem", justifyContent: "space-between", alignItems: "flex-end" }}>
+                      <div style={{ flex: 1 }}>
+                        {ticket.respuesta && (
+                          <div style={{ marginBottom: "0.5rem", padding: "0.75rem", backgroundColor: "#f5f5f5", borderRadius: "0.25rem", fontSize: "0.9rem" }}>
+                            <strong>Respuesta del admin:</strong>
+                            <div style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                              {ticket.respuesta}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      <button
-                        onClick={() => {
-                          setRespondingTicketId(ticket.id);
-                          setTicketResponse(ticket.respuesta || "");
-                        }}
-                        className="button-secondary"
-                        style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                      >
-                        {ticket.respuesta ? "Editar respuesta" : "Responder"}
-                      </button>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button
+                          onClick={() => {
+                            setRespondingTicketId(ticket.id);
+                            setTicketResponse(ticket.respuesta || "");
+                          }}
+                          className="button-secondary"
+                          style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                          disabled={adminActionId === ticket.id}
+                        >
+                          {ticket.respuesta ? "Editar respuesta" : "Responder"}
+                        </button>
+                        <button
+                          type="button"
+                          className="button-danger"
+                          onClick={() => handleEliminarTicket(ticket.id)}
+                          disabled={adminActionId === ticket.id}
+                          style={{ padding: "0.5rem 0.75rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+                        >
+                          <Trash2 size={14} />
+                          Eliminar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
