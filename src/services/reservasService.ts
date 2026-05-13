@@ -48,23 +48,27 @@ function generarFechasRecurrentes(
 export const reservasService = {
   // Obtener todas las reservas del usuario
   async obtenerReservasUsuario(usuarioId: string): Promise<Reserva[]> {
-    const { data, error } = await supabase
+    // Sin embeds automáticos para evitar ambigüedad con múltiples FK a usuarios
+    const { data: reservas, error: reservasError } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre),
-        usuario_rol:usuarios(rol)
-      `)
+      .select("*")
       .eq("usuario_id", usuarioId)
       .order("fecha_inicio", { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map((r: any) => ({
+    if (reservasError) throw reservasError;
+
+    // Obtener datos del usuario
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("email, nombre, rol")
+      .eq("id", usuarioId)
+      .single();
+
+    return (reservas || []).map((r: any) => ({
       ...r,
-      usuario_email: r.usuario_email?.email || undefined,
-      usuario_nombre: r.usuario_nombre?.nombre || undefined,
-      usuario_rol: r.usuario_rol?.rol || undefined,
+      usuario_email: usuario?.email,
+      usuario_nombre: usuario?.nombre,
+      usuario_rol: usuario?.rol,
     }));
   },
 
@@ -90,47 +94,57 @@ export const reservasService = {
     const inicio = `${fecha}T00:00:00`;
     const fin = `${fecha}T23:59:59`;
 
-    const { data, error } = await supabase
+    // Sin embeds automáticos para evitar ambigüedad con múltiples FK a usuarios
+    const { data: reservas, error: reservasError } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre),
-        usuario_rol:usuarios(rol)
-      `)
+      .select("*")
       .eq("estado", "confirmada")
       .lt("fecha_inicio", fin)
       .gt("fecha_fin", inicio)
       .order("fecha_inicio", { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map((r: any) => ({
-      ...r,
-      usuario_email: r.usuario_email?.email || undefined,
-      usuario_nombre: r.usuario_nombre?.nombre || undefined,
-      usuario_rol: r.usuario_rol?.rol || undefined,
-    }));
+    if (reservasError) throw reservasError;
+
+    // Obtener todos los usuarios para enriquecer datos
+    const { data: usuarios } = await supabase
+      .from("usuarios")
+      .select("id, email, nombre, rol");
+
+    return (reservas || []).map((r: any) => {
+      const user = (usuarios || []).find((u: any) => u.id === r.usuario_id);
+      return {
+        ...r,
+        usuario_email: user?.email,
+        usuario_nombre: user?.nombre,
+        usuario_rol: user?.rol,
+      };
+    });
   },
 
   async obtenerReservasConfirmadas(): Promise<Reserva[]> {
-    const { data, error } = await supabase
+    // Sin embeds automáticos para evitar ambigüedad con múltiples FK a usuarios
+    const { data: reservas, error: reservasError } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre),
-        usuario_rol:usuarios(rol)
-      `)
+      .select("*")
       .eq("estado", "confirmada")
       .order("fecha_inicio", { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map((r: any) => ({
-      ...r,
-      usuario_email: r.usuario_email?.email || undefined,
-      usuario_nombre: r.usuario_nombre?.nombre || undefined,
-      usuario_rol: r.usuario_rol?.rol || undefined,
-    }));
+    if (reservasError) throw reservasError;
+
+    // Obtener todos los usuarios para enriquecer datos
+    const { data: usuarios } = await supabase
+      .from("usuarios")
+      .select("id, email, nombre, rol");
+
+    return (reservas || []).map((r: any) => {
+      const user = (usuarios || []).find((u: any) => u.id === r.usuario_id);
+      return {
+        ...r,
+        usuario_email: user?.email,
+        usuario_nombre: user?.nombre,
+        usuario_rol: user?.rol,
+      };
+    });
   },
 
   // Crear nueva reserva (con soporte para recurrencias)
