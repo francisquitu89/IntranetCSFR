@@ -38,13 +38,13 @@ create table if not exists usuarios (
 -- Reservas
 create table if not exists reservas (
   id uuid primary key default gen_random_uuid(),
-  usuario_id uuid references usuarios(id) on delete set null,
+  usuario_id uuid constraint fk_reservas_usuario_creador references usuarios(id) on delete set null,
   sala sala_type not null,
   fecha_inicio timestamptz not null,
   fecha_fin timestamptz not null,
   descripcion text,
   cantidad int default 1,
-  responsable_id uuid references usuarios(id) on delete set null,
+  responsable_id uuid constraint fk_reservas_usuario_responsable references usuarios(id) on delete set null,
   responsable_nombre text,
   responsable_email text,
   estado text not null default 'pendiente', -- pendiente|confirmada|cancelada
@@ -53,8 +53,8 @@ create table if not exists reservas (
 );
 
 -- Comentarios para especificar relaciones explícitamente (evita ambigüedad en PostgREST)
-comment on column reservas.usuario_id is 'Relación a tabla usuarios - usuario que realiza la reserva';
-comment on column reservas.responsable_id is 'Relación a tabla usuarios - persona responsable de la reserva';
+comment on constraint fk_reservas_usuario_creador on reservas is 'Usuario que realizó la reserva';
+comment on constraint fk_reservas_usuario_responsable on reservas is 'Persona responsable de la reserva';
 
 -- Tickets
 create table if not exists tickets (
