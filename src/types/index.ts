@@ -42,7 +42,7 @@ export interface Usuario {
   id: string;
   email: string;
   nombre: string;
-  rol: "admin" | "profesor" | "funcionario" | "director";
+  rol: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
   departamento?: string;
   telefono?: string;
   created_at: string;
@@ -53,12 +53,15 @@ export interface Reserva {
   usuario_id: string;
   usuario_email?: string;
   usuario_nombre?: string;
-  usuario_rol?: "admin" | "profesor" | "funcionario" | "director";
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
   sala: SalaType;
   fecha_inicio: string;
   fecha_fin: string;
   descripcion?: string;
   cantidad?: number;
+  responsable_id?: string;
+  responsable_nombre?: string;
+  responsable_email?: string;
   estado: "confirmada" | "cancelada" | "pendiente";
   recurrence_type?: "none" | "weekly" | "monthly" | "yearly";
   recurrence_end_date?: string;
@@ -73,7 +76,7 @@ export interface Ticket {
   usuario_id: string;
   usuario_nombre?: string;
   usuario_email?: string;
-  usuario_rol?: "admin" | "profesor" | "funcionario" | "director";
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
   sala?: SalaType;
   equipo?: string;
   categoria: TicketCategoryType;

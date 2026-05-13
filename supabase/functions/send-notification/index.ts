@@ -7,6 +7,8 @@ interface NotificationRequest {
   asunto: string;
   cuerpo_html: string;
   cuerpo_texto: string;
+  responsable_nombre?: string;
+  responsable_email?: string;
 }
 
 const corsHeaders = {
@@ -54,7 +56,16 @@ Deno.serve(async (req) => {
       return cc.split(",").map(email => email.trim()).filter(email => email.length > 0);
     };
 
-    const ccArray = parseCcArray(payload.cc);
+    let ccArray = parseCcArray(payload.cc);
+    
+    // Agregar responsable_email al CC si existe
+    if (payload.responsable_email) {
+      if (!ccArray) {
+        ccArray = [payload.responsable_email];
+      } else if (!ccArray.includes(payload.responsable_email)) {
+        ccArray.push(payload.responsable_email);
+      }
+    }
 
     // Intentar primero con Resend
     if (resendApiKey) {

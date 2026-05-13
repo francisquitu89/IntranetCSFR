@@ -39,10 +39,19 @@ export function AdminPage({ usuario }: AdminPageProps) {
     nombre: "",
     email: "",
     password: "",
-    rol: "profesor" as "profesor" | "funcionario",
+    rol: "profesor" as "profesor" | "funcionario" | "servicios_generales",
     departamento: "",
     telefono: "",
   });
+
+  // User search and edit state
+  const [usuariosSearchTerm, setUsuariosSearchTerm] = useState("");
+  const [editingUsuarioId, setEditingUsuarioId] = useState<string | null>(null);
+  const [editingUsuarioData, setEditingUsuarioData] = useState<{ nombre: string; rol: string }>({ nombre: "", rol: "" });
+  const [savingUsuario, setSavingUsuario] = useState(false);
+  
+  // Reservas filter state
+  const [reservasFilterDate, setReservasFilterDate] = useState(formatLocalDate());
 
   const cargarDatos = async () => {
     try {
@@ -59,6 +68,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
       setReservas(reservasDelDia);
       setTickets(ticketsGlobales);
       setUsuarios((usuariosGlobales.data || []) as Usuario[]);
+      setReservasFilterDate(formatLocalDate());
       
       const map: Record<string, number> = {};
       (inventarioRows || []).forEach((it) => (map[it.sala] = it.cantidad));
@@ -129,6 +139,10 @@ export function AdminPage({ usuario }: AdminPageProps) {
       await reservasService.actualizarReservaAdmin(reservaId, {
         fecha_inicio: timeToDateTime(editingReserva.fecha, editingReserva.horarioInicio),
         fecha_fin: timeToDateTime(editingReserva.fecha, editingReserva.horarioFin),
+        cantidad: editingReserva.cantidad,
+        responsable_id: editingReserva.responsable_id,
+        responsable_nombre: editingReserva.responsable_nombre,
+        responsable_email: editingReserva.responsable_email,
       });
       
       await cargarDatos();
@@ -150,6 +164,38 @@ export function AdminPage({ usuario }: AdminPageProps) {
       setError(err.message || "No se pudo cambiar la contraseña");
     } finally {
       setAdminActionId(null);
+    }
+  };
+
+  const handleEditarUsuario = (usuario: Usuario) => {
+    setEditingUsuarioId(usuario.id);
+    setEditingUsuarioData({ nombre: usuario.nombre, rol: usuario.rol });
+  };
+
+  const handleGuardarUsuario = async () => {
+    if (!editingUsuarioId) return;
+
+    if (!editingUsuarioData.nombre.trim()) {
+      setError("El nombre no puede estar vacío");
+      return;
+    }
+
+    try {
+      setSavingUsuario(true);
+      const { error } = await supabase
+        .from("usuarios")
+        .update({ nombre: editingUsuarioData.nombre, rol: editingUsuarioData.rol })
+        .eq("id", editingUsuarioId);
+
+      if (error) throw error;
+
+      // Reload data
+      await cargarDatos();
+      setEditingUsuarioId(null);
+    } catch (err: any) {
+      setError(err.message || "No se pudo guardar el usuario");
+    } finally {
+      setSavingUsuario(false);
     }
   };
 
@@ -383,11 +429,12 @@ export function AdminPage({ usuario }: AdminPageProps) {
                   <label>Rol *</label>
                   <select
                     value={newUserData.rol}
-                    onChange={(e) => setNewUserData({ ...newUserData, rol: e.target.value as "profesor" | "funcionario" })}
+                    onChange={(e) => setNewUserData({ ...newUserData, rol: e.target.value as "profesor" | "funcionario" | "servicios_generales" })}
                     className="select"
                   >
                     <option value="profesor">Profesor</option>
                     <option value="funcionario">Funcionario</option>
+                    <option value="servicios_generales">Servicios Generales</option>
                   </select>
                 </div>
 
@@ -583,36 +630,111 @@ export function AdminPage({ usuario }: AdminPageProps) {
                 <p className="section-subtitle">Vista general del directorio cargado en la tabla `usuarios`.</p>
               </div>
             </div>
+            <div className="field" style={{ marginBottom: "1rem" }}>
+              <input
+                type="text"
+                placeholder="Buscar por nombre o correo..."
+                value={usuariosSearchTerm}
+                onChange={(e) => setUsuariosSearchTerm(e.target.value)}
+                className="input"
+              />
+            </div>
             <div className="admin-list">
-              {usuarios.slice(0, 12).map((user) => (
+              {usuarios
+                .filter((user) => 
+                  user.nombre.toLowerCase().includes(usuariosSearchTerm.toLowerCase()) ||
+                  user.email.toLowerCase().includes(usuariosSearchTerm.toLowerCase())
+                )
+                .slice(0, 12)
+                .map((user) => (
                 <div key={user.id} className="admin-row">
-                  <div>
-                    <strong>{user.nombre}</strong>
-                    <div className="muted">{user.email}</div>
-                  </div>
+                  {editingUsuarioId === user.id ? (
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      <div className="field">
+                        <label>Nombre</label>
+                        <input
+                          type="text"
+                          value={editingUsuarioData.nombre}
+                          onChange={(e) => setEditingUsuarioData({ ...editingUsuarioData, nombre: e.target.value })}
+                          className="input"
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Rol</label>
+                        <select
+                          value={editingUsuarioData.rol}
+                          onChange={(e) => setEditingUsuarioData({ ...editingUsuarioData, rol: e.target.value })}
+                          className="select"
+                        >
+                          <option value="profesor">Profesor</option>
+                          <option value="funcionario">Funcionario</option>
+                          <option value="servicios_generales">Servicios Generales</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <strong>{user.nombre}</strong>
+                      <div className="muted">{user.email}</div>
+                    </div>
+                  )}
                   <div className="admin-row-actions">
-                    <button
-                      type="button"
-                      className="button"
-                      onClick={() => handleResetPassword(user.id)}
-                      disabled={adminActionId === user.id}
-                      style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
-                    >
-                      <KeyRound size={16} />
-                      Cambiar contraseña
-                    </button>
-                    <button
-                      type="button"
-                      className="button-danger"
-                      onClick={() => handleEliminarUsuario(user.id, user.nombre)}
-                      disabled={adminActionId === user.id}
-                      style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
-                    >
-                      Eliminar
-                    </button>
-                    <span className={`status-pill ${user.rol === "admin" ? "status-ok" : "status-warn"}`}>
-                      {user.rol}
-                    </span>
+                    {editingUsuarioId === user.id ? (
+                      <>
+                        <button
+                          type="button"
+                          className="button"
+                          onClick={handleGuardarUsuario}
+                          disabled={savingUsuario}
+                          style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                        >
+                          {savingUsuario ? "Guardando..." : "Guardar"}
+                        </button>
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          onClick={() => setEditingUsuarioId(null)}
+                          disabled={savingUsuario}
+                          style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          onClick={() => handleEditarUsuario(user)}
+                          disabled={adminActionId === user.id}
+                          style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="button"
+                          onClick={() => handleResetPassword(user.id)}
+                          disabled={adminActionId === user.id}
+                          style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                        >
+                          <KeyRound size={16} />
+                          Cambiar contraseña
+                        </button>
+                        <button
+                          type="button"
+                          className="button-danger"
+                          onClick={() => handleEliminarUsuario(user.id, user.nombre)}
+                          disabled={adminActionId === user.id}
+                          style={{ fontSize: "0.875rem", padding: "0.5rem 0.75rem" }}
+                        >
+                          Eliminar
+                        </button>
+                        <span className={`status-pill ${user.rol === "admin" ? "status-ok" : "status-warn"}`}>
+                          {user.rol === "servicios_generales" ? "Servicios Generales" : user.rol}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -624,12 +746,29 @@ export function AdminPage({ usuario }: AdminPageProps) {
           <section className="form-card">
             <div className="section-title-wrap">
               <div>
-                <h2 className="section-title">Reservas del día</h2>
-                <p className="section-subtitle">Relación de ocupación actual.</p>
+                <h2 className="section-title">Reservas totales</h2>
+                <p className="section-subtitle">Filtrar y gestionar todas las reservas por fecha.</p>
+              </div>
+            </div>
+            <div className="field" style={{ marginBottom: "1rem" }}>
+              <label>Filtrar por fecha</label>
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <input
+                  type="date"
+                  value={reservasFilterDate}
+                  onChange={(e) => setReservasFilterDate(e.target.value)}
+                  className="input"
+                  style={{ width: "auto" }}
+                />
+                <span className="muted" style={{ marginTop: "0.75rem" }}>
+                  {new Date(reservasFilterDate).toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </span>
               </div>
             </div>
             <div className="admin-list">
-              {reservas.map((reserva) => (
+              {reservas
+                .filter((reserva) => new Date(reserva.fecha_inicio).toLocaleDateString("en-CA") === reservasFilterDate)
+                .map((reserva) => (
                 <div key={reserva.id} className="admin-row" style={{ flexDirection: "column", gap: "1rem" }}>
                   <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "0.5rem" }}>
@@ -654,7 +793,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
                   </div>
 
                   {editingReservaId === reserva.id ? (
-                    <div style={{ width: "100%", padding: "1rem", backgroundColor: "#f9f9f9", borderRadius: "0.5rem", gap: "1rem", display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
+                    <div style={{ width: "100%", padding: "1rem", backgroundColor: "#f9f9f9", borderRadius: "0.5rem", gap: "1rem", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
                       <div className="field">
                         <label>Fecha</label>
                         <input
@@ -699,6 +838,42 @@ export function AdminPage({ usuario }: AdminPageProps) {
                                   {slot.label}
                                 </option>
                               ))}
+                        </select>
+                      </div>
+                      {["Préstamo Notebooks", "Préstamo Tablets"].includes(editingReserva.sala as any) && (
+                        <div className="field">
+                          <label>Cantidad</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={editingReserva.cantidad || 1}
+                            onChange={(e) => setEditingReserva({ ...editingReserva, cantidad: parseInt(e.target.value) || 1 })}
+                            className="input"
+                          />
+                        </div>
+                      )}
+                      <div className="field" style={{ gridColumn: "1 / -1" }}>
+                        <label>Responsable (opcional)</label>
+                        <select
+                          value={editingReserva.responsable_id || ""}
+                          onChange={(e) => {
+                            const usuario = usuarios.find(u => u.id === e.target.value);
+                            setEditingReserva({
+                              ...editingReserva,
+                              responsable_id: e.target.value,
+                              responsable_nombre: usuario?.nombre,
+                              responsable_email: usuario?.email
+                            });
+                          }}
+                          className="select"
+                        >
+                          <option value="">-- Ninguno --</option>
+                          {usuarios.map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.nombre} ({u.email})
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div style={{ gridColumn: "1 / -1", display: "flex", gap: "0.5rem" }}>

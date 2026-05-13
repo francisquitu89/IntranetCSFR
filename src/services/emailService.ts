@@ -9,6 +9,8 @@ interface EmailPayload {
   asunto: string;
   cuerpo_html: string;
   cuerpo_texto: string;
+  responsable_nombre?: string;
+  responsable_email?: string;
 }
 
 // Función para enviar emails via API (necesita backend)
@@ -42,6 +44,7 @@ export const notificarReserva = async (
           <li><strong>Fecha de Inicio:</strong> ${new Date(reserva.fecha_inicio).toLocaleString("es-CL")}</li>
           <li><strong>Fecha de Fin:</strong> ${new Date(reserva.fecha_fin).toLocaleString("es-CL")}</li>
           ${reserva.descripcion ? `<li><strong>Descripción:</strong> ${reserva.descripcion}</li>` : ""}
+          ${reserva.responsable_nombre ? `<li><strong>Responsable:</strong> ${reserva.responsable_nombre}</li>` : ""}
           ${tieneRecurrencia ? `
             <li><strong>Repetir Reserva:</strong> ${traducirRecurrencia(reserva.recurrence_type)}</li>
             ${reserva.recurrence_end_date ? `<li><strong>Hasta:</strong> ${new Date(reserva.recurrence_end_date).toLocaleString("es-CL")}</li>` : ""}
@@ -62,6 +65,8 @@ export const notificarReserva = async (
       asunto: `Reserva Confirmada - ${reserva.sala}`,
       cuerpo_html: cuerpoHtml,
       cuerpo_texto: `Reserva confirmada para ${reserva.sala}`,
+      responsable_nombre: reserva.responsable_nombre,
+      responsable_email: reserva.responsable_email,
     });
   } catch (error) {
     console.error("Error al enviar notificación de reserva:", error);
@@ -146,6 +151,7 @@ export const notificarCancelacionReserva = async (
           <li><strong>Fecha de Inicio:</strong> ${new Date(reserva.fecha_inicio).toLocaleString("es-CL")}</li>
           <li><strong>Fecha de Fin:</strong> ${new Date(reserva.fecha_fin).toLocaleString("es-CL")}</li>
           ${reserva.descripcion ? `<li><strong>Descripción:</strong> ${reserva.descripcion}</li>` : ""}
+          ${reserva.responsable_nombre ? `<li><strong>Responsable:</strong> ${reserva.responsable_nombre}</li>` : ""}
           ${tieneRecurrencia ? `
             <li><strong>Repetir Reserva:</strong> ${traducirRecurrencia(reserva.recurrence_type)}</li>
             ${reserva.recurrence_end_date ? `<li><strong>Hasta:</strong> ${new Date(reserva.recurrence_end_date).toLocaleString("es-CL")}</li>` : ""}
@@ -166,6 +172,8 @@ export const notificarCancelacionReserva = async (
       asunto: `Reserva Cancelada - ${reserva.sala}`,
       cuerpo_html: cuerpoHtml,
       cuerpo_texto: `Reserva cancelada para ${reserva.sala}`,
+      responsable_nombre: reserva.responsable_nombre,
+      responsable_email: reserva.responsable_email,
     });
   } catch (error) {
     console.error("Error al enviar notificación de cancelación:", error);
@@ -194,6 +202,8 @@ async function registrarNotificacion(email: EmailPayload) {
         asunto: email.asunto,
         cuerpo_html: email.cuerpo_html,
         cuerpo_texto: email.cuerpo_texto,
+        responsable_nombre: email.responsable_nombre,
+        responsable_email: email.responsable_email,
       }),
     });
 

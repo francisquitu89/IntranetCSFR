@@ -42,10 +42,12 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
     recurrenceEndDate: "",
     recurrenceCount: 1,
     cantidad: 1,
+    responsable_id: "",
   });
   const [inventario, setInventario] = useState<Record<string, number>>({});
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [editingReservaId, setEditingReservaId] = useState<string | null>(null);
-  const [editarFormData, setEditarFormData] = useState({ sala: "" as SalaType, fecha: "", horarioInicio: "", horarioFin: "", descripcion: "" });
+  const [editarFormData, setEditarFormData] = useState({ sala: "" as SalaType, fecha: "", horarioInicio: "", horarioFin: "", descripcion: "", responsable_id: "" });
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -53,14 +55,16 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
 
       try {
         setLoading(true);
-        const [reservasPersonales, reservasGlobales, inventarioRows] = await Promise.all([
+        const [reservasPersonales, reservasGlobales, inventarioRows, usuariosData] = await Promise.all([
           reservasService.obtenerReservasUsuario(usuario.id),
           reservasService.obtenerReservasConfirmadasPorFecha(selectedDate),
           inventarioService.obtenerInventario(),
+          supabase.from("usuarios").select("*").order("nombre", { ascending: true }),
         ]);
 
         setReservasUsuario(reservasPersonales);
         setReservasDelDia(reservasGlobales);
+        setUsuarios((usuariosData.data || []) as Usuario[]);
         const map: Record<string, number> = {};
         (inventarioRows || []).forEach((it) => (map[it.sala] = it.cantidad));
         setInventario(map);
@@ -208,6 +212,8 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
       const fechaInicio = timeToDateTime(selectedDate, startSlot!.start).toISOString();
       const fechaFin = timeToDateTime(selectedDate, endSlot!.end).toISOString();
       
+      const responsableSeleccionado = formData.responsable_id ? usuarios.find(u => u.id === formData.responsable_id) : null;
+
       await reservasService.crearReserva(
         usuario.id,
         formData.sala,
@@ -217,7 +223,10 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
         tipoReserva === "espacio" && formData.recurrenceType !== "none" ? formData.recurrenceType : undefined,
         tipoReserva === "espacio" && formData.recurrenceType !== "none" ? formData.recurrenceEndDate || undefined : undefined,
         tipoReserva === "espacio" && formData.recurrenceType !== "none" && formData.recurrenceCount > 1 ? formData.recurrenceCount : undefined,
-        tipoReserva === "objeto" ? formData.cantidad : undefined
+        tipoReserva === "objeto" ? formData.cantidad : undefined,
+        responsableSeleccionado?.id,
+        responsableSeleccionado?.nombre,
+        responsableSeleccionado?.email
       );
 
       setFormData({
@@ -229,6 +238,7 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
         recurrenceEndDate: "",
         recurrenceCount: 1,
         cantidad: 1,
+        responsable_id: "",
       });
       setShowForm(false);
 
@@ -502,6 +512,22 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                 </div>
               )}
 
+              <div className="field" style={{ gridColumn: "1 / -1" }}>
+                <label>Responsable (opcional)</label>
+                <select
+                  value={formData.responsable_id}
+                  onChange={(e) => setFormData({ ...formData, responsable_id: e.target.value })}
+                  className="select"
+                >
+                  <option value="">-- Ninguno --</option>
+                  {usuarios.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nombre} ({u.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Campos de recurrencia - solo para espacios */}
               {tipoReserva === "espacio" && (
                 <>
@@ -611,6 +637,7 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                               horarioInicio: horaInicio,
                               horarioFin: horaFin,
                               descripcion: reserva.descripcion || "",
+                              responsable_id: reserva.responsable_id || "",
                             });
                           }}
                           className="button-secondary"

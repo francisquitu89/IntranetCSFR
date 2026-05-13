@@ -19,7 +19,7 @@ Se han implementado todas las funcionalidades solicitadas:
 - ✅ Agregados campos opcionales a `Reserva`:
   - `usuario_email?: string` - Correo del que reservó
   - `usuario_nombre?: string` - Nombre del usuario
-  - `usuario_rol?: "admin" | "profesor" | "funcionario" | "director"` - Rol del usuario
+  - `usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales"` - Rol del usuario
 
 #### 2. `src/services/reservasService.ts`
 - ✅ Todas las funciones ahora hacen **join con usuarios**:

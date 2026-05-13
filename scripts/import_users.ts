@@ -26,7 +26,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 type ImportedUser = {
   nombre: string;
   email: string;
-  rol: "admin" | "profesor" | "funcionario" | "director";
+  rol: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
   departamento?: string | null;
   telefono?: string | null;
   password: string;
@@ -74,7 +74,7 @@ function parseUsers(fileContent: string): ImportedUser[] {
     result.push({
       nombre,
       email,
-      rol: ["admin", "profesor", "funcionario", "director"].includes(safeRol)
+      rol: ["admin", "profesor", "funcionario", "director", "servicios_generales"].includes(safeRol)
         ? safeRol
         : "funcionario",
       departamento: departamento || null,

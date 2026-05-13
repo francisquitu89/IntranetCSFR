@@ -87,7 +87,7 @@ export function EquipmentAvailabilityBoard({
 
                     // Crear lista de quiénes tienen reserva en este horario
                     const usuariosReservando = reservasEnHorario
-                      .map((r) => `${r.usuario_nombre || "Usuario"} (${r.usuario_rol || "?"}) - ${r.cantidad || 1} ${r.cantidad && r.cantidad > 1 ? "dispositivos" : "dispositivo"}`)
+                      .map((r) => `${r.usuario_nombre || "Usuario"} - ${r.cantidad || 1} ${r.cantidad && r.cantidad > 1 ? "dispositivos" : "dispositivo"}`)
                       .join("\n");
 
                     return (
@@ -96,32 +96,50 @@ export function EquipmentAvailabilityBoard({
                         className={className}
                         title={
                           disponible > 0
-                            ? `${equipo.label}\nDisponibles: ${disponible}/${cantidadTotal}\nOcupados: ${reservasEnHorario.length} (${porcentajeOcupado}%)`
-                            : `${equipo.label}\nSIN DISPONIBILIDAD\nReservados por:\n${usuariosReservando}`
+                            ? `${equipo.label}\nDisponibles: ${disponible}/${cantidadTotal}\n\nReservados por:\n${usuariosReservando || "(ninguno)"}`
+                            : `${equipo.label}\n❌ SIN DISPONIBILIDAD\n\nReservados por:\n${usuariosReservando}`
                         }
                         style={{
                           fontWeight: "bold",
                           fontSize: "1rem",
-                          minWidth: "70px",
+                          minWidth: "100px",
                           textAlign: "center",
+                          verticalAlign: "middle",
+                          padding: "0.5rem",
+                          lineHeight: "1.2",
                         }}
                       >
-                        <span style={{
-                          display: "block",
-                          fontSize: "1.1rem",
-                          fontWeight: "900",
-                          letterSpacing: "0.5px",
+                        <div style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.25rem",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}>
-                          {disponible > 0 ? `${disponible}/${cantidadTotal}` : "❌"}
-                        </span>
-                        <span style={{
-                          display: "block",
-                          fontSize: "0.8rem",
-                          opacity: 0.9,
-                          marginTop: "2px",
-                        }}>
-                          {porcentajeOcupado}%
-                        </span>
+                          <span style={{
+                            fontSize: "1.1rem",
+                            fontWeight: "900",
+                            letterSpacing: "0.5px",
+                          }}>
+                            {disponible > 0 ? `${disponible}/${cantidadTotal}` : "❌"}
+                          </span>
+                          {reservasEnHorario.length > 0 && (
+                            <div style={{ fontSize: "0.7rem", opacity: 0.85, maxHeight: "50px", overflow: "hidden" }}>
+                              {reservasEnHorario.map((r, idx) => (
+                                <div key={idx} style={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                                  📌 {r.usuario_nombre || "Usuario"} ({r.cantidad || 1})
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <span style={{
+                            fontSize: "0.75rem",
+                            opacity: 0.8,
+                            marginTop: "2px",
+                          }}>
+                            {porcentajeOcupado}%
+                          </span>
+                        </div>
                       </td>
                     );
                   })}

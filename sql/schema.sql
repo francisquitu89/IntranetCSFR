@@ -28,7 +28,7 @@ create table if not exists usuarios (
   email text not null unique,
   nombre text,
   password text,
-  rol text default 'profesor', -- admin|profesor|funcionario|director
+  rol text default 'profesor', -- admin|profesor|funcionario|director|servicios_generales
   departamento text,
   telefono text,
   created_at timestamptz default now(),
@@ -43,6 +43,10 @@ create table if not exists reservas (
   fecha_inicio timestamptz not null,
   fecha_fin timestamptz not null,
   descripcion text,
+  cantidad int default 1,
+  responsable_id uuid references usuarios(id) on delete set null,
+  responsable_nombre text,
+  responsable_email text,
   estado text not null default 'pendiente', -- pendiente|confirmada|cancelada
   created_at timestamptz default now(),
   updated_at timestamptz default now()

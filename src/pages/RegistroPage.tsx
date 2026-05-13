@@ -40,7 +40,7 @@ export function RegistroPage({ onRegistroSuccess }: { onRegistroSuccess?: () => 
         formData.email,
         formData.password,
         formData.nombre,
-        formData.rol as "admin" | "profesor" | "funcionario" | "director",
+        formData.rol as "admin" | "profesor" | "funcionario" | "director" | "servicios_generales",
         formData.departamento,
         formData.telefono
       );
@@ -88,6 +88,7 @@ export function RegistroPage({ onRegistroSuccess }: { onRegistroSuccess?: () => 
                 <select name="rol" value={formData.rol} onChange={handleChange} className="select">
                   <option value="profesor">Profesor</option>
                   <option value="funcionario">Funcionario</option>
+                  <option value="servicios_generales">Servicios Generales</option>
                   <option value="director">Director</option>
                 </select>
               </div>

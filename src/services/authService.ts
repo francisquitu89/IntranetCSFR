@@ -7,7 +7,7 @@ export const authService = {
     email: string,
     password: string,
     nombre: string,
-    rol: "admin" | "profesor" | "funcionario" | "director",
+    rol: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales",
     departamento?: string,
     telefono?: string
   ): Promise<{ usuario: Usuario; sesion: any }> {
