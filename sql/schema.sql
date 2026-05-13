@@ -52,6 +52,10 @@ create table if not exists reservas (
   updated_at timestamptz default now()
 );
 
+-- Comentarios para especificar relaciones explícitamente (evita ambigüedad en PostgREST)
+comment on column reservas.usuario_id is 'Relación a tabla usuarios - usuario que realiza la reserva';
+comment on column reservas.responsable_id is 'Relación a tabla usuarios - persona responsable de la reserva';
+
 -- Tickets
 create table if not exists tickets (
   id uuid primary key default gen_random_uuid(),
