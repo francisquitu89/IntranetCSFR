@@ -87,7 +87,7 @@ export function EquipmentAvailabilityBoard({
 
                     // Crear lista de quiénes tienen reserva en este horario
                     const usuariosReservando = reservasEnHorario
-                      .map((r) => `${r.usuario_nombre || "Usuario"} - ${r.cantidad || 1} ${r.cantidad && r.cantidad > 1 ? "dispositivos" : "dispositivo"}`)
+                      .map((r) => `${r.responsable_nombre || r.usuario_nombre || "Usuario"} - ${r.cantidad || 1} ${r.cantidad && r.cantidad > 1 ? "dispositivos" : "dispositivo"}`)
                       .join("\n");
 
                     return (
@@ -127,7 +127,7 @@ export function EquipmentAvailabilityBoard({
                             <div style={{ fontSize: "0.7rem", opacity: 0.85, maxHeight: "50px", overflow: "hidden" }}>
                               {reservasEnHorario.map((r, idx) => (
                                 <div key={idx} style={{ whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                                  📌 {r.usuario_nombre || "Usuario"} ({r.cantidad || 1})
+                                  📌 {r.responsable_nombre || r.usuario_nombre || "Usuario"} ({r.cantidad || 1})
                                 </div>
                               ))}
                             </div>

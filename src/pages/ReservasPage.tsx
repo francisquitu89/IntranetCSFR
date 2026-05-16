@@ -776,6 +776,16 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                       <strong>Rol:</strong> <span style={{ textTransform: "capitalize" }}>{reserva.usuario_rol}</span>
                     </div>
                   )}
+                  {reserva.responsable_nombre && (
+                    <div className="muted">
+                      <strong>Responsable:</strong> {reserva.responsable_nombre}
+                    </div>
+                  )}
+                  {reserva.responsable_email && (
+                    <div className="muted">
+                      <strong>Correo Responsable:</strong> {reserva.responsable_email}
+                    </div>
+                  )}
                   {reserva.descripcion && <p className="muted">{reserva.descripcion}</p>}
                 </div>
               )}
@@ -833,6 +843,16 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                       {reserva.usuario_rol && (
                         <div className="muted">
                           <strong>Rol:</strong> <span style={{ textTransform: "capitalize" }}>{reserva.usuario_rol}</span>
+                        </div>
+                      )}
+                      {reserva.responsable_nombre && (
+                        <div className="muted">
+                          <strong>Responsable:</strong> {reserva.responsable_nombre}
+                        </div>
+                      )}
+                      {reserva.responsable_email && (
+                        <div className="muted">
+                          <strong>Correo Responsable:</strong> {reserva.responsable_email}
                         </div>
                       )}
                       {reserva.descripcion && <p className="muted">{reserva.descripcion}</p>}

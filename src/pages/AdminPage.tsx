@@ -47,7 +47,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
   // User search and edit state
   const [usuariosSearchTerm, setUsuariosSearchTerm] = useState("");
   const [editingUsuarioId, setEditingUsuarioId] = useState<string | null>(null);
-  const [editingUsuarioData, setEditingUsuarioData] = useState<{ nombre: string; rol: string }>({ nombre: "", rol: "" });
+  const [editingUsuarioData, setEditingUsuarioData] = useState<{ nombre: string; email: string; rol: string }>({ nombre: "", email: "", rol: "" });
   const [savingUsuario, setSavingUsuario] = useState(false);
   
   // Reservas filter state
@@ -124,6 +124,9 @@ export function AdminPage({ usuario }: AdminPageProps) {
       fecha: fechaReserva,
       horarioInicio: slotInicio?.start || "",
       horarioFin: slotFin?.end || "",
+      responsable_id: reserva.responsable_id,
+      responsable_nombre: reserva.responsable_nombre,
+      responsable_email: reserva.responsable_email,
     });
   };
 
@@ -169,7 +172,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
 
   const handleEditarUsuario = (usuario: Usuario) => {
     setEditingUsuarioId(usuario.id);
-    setEditingUsuarioData({ nombre: usuario.nombre, rol: usuario.rol });
+    setEditingUsuarioData({ nombre: usuario.nombre, email: usuario.email, rol: usuario.rol });
   };
 
   const handleGuardarUsuario = async () => {
@@ -180,11 +183,16 @@ export function AdminPage({ usuario }: AdminPageProps) {
       return;
     }
 
+    if (!editingUsuarioData.email.trim()) {
+      setError("El email no puede estar vacío");
+      return;
+    }
+
     try {
       setSavingUsuario(true);
       const { error } = await supabase
         .from("usuarios")
-        .update({ nombre: editingUsuarioData.nombre, rol: editingUsuarioData.rol })
+        .update({ nombre: editingUsuarioData.nombre, email: editingUsuarioData.email, rol: editingUsuarioData.rol })
         .eq("id", editingUsuarioId);
 
       if (error) throw error;
@@ -656,6 +664,15 @@ export function AdminPage({ usuario }: AdminPageProps) {
                           type="text"
                           value={editingUsuarioData.nombre}
                           onChange={(e) => setEditingUsuarioData({ ...editingUsuarioData, nombre: e.target.value })}
+                          className="input"
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Email</label>
+                        <input
+                          type="email"
+                          value={editingUsuarioData.email}
+                          onChange={(e) => setEditingUsuarioData({ ...editingUsuarioData, email: e.target.value })}
                           className="input"
                         />
                       </div>

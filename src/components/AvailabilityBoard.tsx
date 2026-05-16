@@ -85,11 +85,11 @@ export function AvailabilityBoard({
                         className={isBusy ? "slot-busy" : "slot-free"}
                         title={
                           isBusy
-                            ? `${sala.label} reservado\n${format(new Date(reservaActiva!.fecha_inicio), "HH:mm")} - ${format(new Date(reservaActiva!.fecha_fin), "HH:mm")}\nPor: ${reservaActiva!.usuario_nombre || "Usuario"} (${reservaActiva!.usuario_rol || "?"})\nCorreo: ${reservaActiva!.usuario_email || "N/A"}`
+                            ? `${sala.label} reservado\n${format(new Date(reservaActiva!.fecha_inicio), "HH:mm")} - ${format(new Date(reservaActiva!.fecha_fin), "HH:mm")}\nPor: ${reservaActiva!.responsable_nombre || reservaActiva!.usuario_nombre || "Usuario"} (${reservaActiva!.responsable_nombre ? "Responsable" : reservaActiva!.usuario_rol || "?"})\nCorreo: ${reservaActiva!.responsable_email || reservaActiva!.usuario_email || "N/A"}`
                             : `${sala.label} libre`
                         }
                       >
-                        <span>{isBusy ? (reservaActiva?.usuario_nombre || "Reservado") : "Libre"}</span>
+                        <span>{isBusy ? (reservaActiva?.responsable_nombre || reservaActiva?.usuario_nombre || "Reservado") : "Libre"}</span>
                       </td>
                     );
                   })}
