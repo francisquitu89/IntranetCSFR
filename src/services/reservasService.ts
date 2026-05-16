@@ -276,18 +276,25 @@ export const reservasService = {
 
   // Cancelar reserva
   async cancelarReserva(reservaId: string): Promise<void> {
-    // Obtener datos de la reserva y usuario
+    // Obtener datos de la reserva
     const { data: reserva, error: errorFetch } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre)
-      `)
+      .select("*")
       .eq("id", reservaId)
       .single();
 
     if (errorFetch) throw errorFetch;
+
+    // Obtener datos del usuario
+    let usuario = null;
+    if (reserva.usuario_id) {
+      const { data: usuarioData } = await supabase
+        .from("usuarios")
+        .select("email, nombre")
+        .eq("id", reserva.usuario_id)
+        .single();
+      usuario = usuarioData;
+    }
 
     // Actualizar estado a cancelada
     const { error } = await supabase
@@ -298,11 +305,11 @@ export const reservasService = {
     if (error) throw error;
 
     // Enviar notificación de cancelación
-    if (reserva) {
+    if (reserva && usuario) {
       try {
         await notificarCancelacionReserva(reserva, {
-          email: reserva.usuario_email?.email,
-          nombre: reserva.usuario_nombre?.nombre,
+          email: usuario.email,
+          nombre: usuario.nombre,
         });
       } catch (emailError) {
         console.error("Error al enviar notificación de cancelación:", emailError);
@@ -313,18 +320,25 @@ export const reservasService = {
 
   // Eliminar reserva permanentemente
   async eliminarReserva(reservaId: string): Promise<void> {
-    // Obtener datos de la reserva y usuario
+    // Obtener datos de la reserva
     const { data: reserva, error: errorFetch } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre)
-      `)
+      .select("*")
       .eq("id", reservaId)
       .single();
 
     if (errorFetch) throw errorFetch;
+
+    // Obtener datos del usuario
+    let usuario = null;
+    if (reserva.usuario_id) {
+      const { data: usuarioData } = await supabase
+        .from("usuarios")
+        .select("email, nombre")
+        .eq("id", reserva.usuario_id)
+        .single();
+      usuario = usuarioData;
+    }
 
     // Eliminar la reserva
     const { error } = await supabase
@@ -335,11 +349,11 @@ export const reservasService = {
     if (error) throw error;
 
     // Enviar notificación de cancelación
-    if (reserva) {
+    if (reserva && usuario) {
       try {
         await notificarCancelacionReserva(reserva, {
-          email: reserva.usuario_email?.email,
-          nombre: reserva.usuario_nombre?.nombre,
+          email: usuario.email,
+          nombre: usuario.nombre,
         });
       } catch (emailError) {
         console.error("Error al enviar notificación de cancelación:", emailError);
@@ -354,21 +368,27 @@ export const reservasService = {
       .from("reservas")
       .update(updates)
       .eq("id", reservaId)
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre),
-        usuario_rol:usuarios(rol)
-      `)
+      .select("*")
       .single();
 
     if (error) throw error;
 
+    // Obtener datos del usuario
+    let usuario = null;
+    if (data.usuario_id) {
+      const { data: usuarioData } = await supabase
+        .from("usuarios")
+        .select("email, nombre, rol")
+        .eq("id", data.usuario_id)
+        .single();
+      usuario = usuarioData;
+    }
+
     return {
       ...data,
-      usuario_email: data.usuario_email?.email || undefined,
-      usuario_nombre: data.usuario_nombre?.nombre || undefined,
-      usuario_rol: data.usuario_rol?.rol || undefined,
+      usuario_email: usuario?.email || undefined,
+      usuario_nombre: usuario?.nombre || undefined,
+      usuario_rol: usuario?.rol || undefined,
     };
   },
 
@@ -379,24 +399,29 @@ export const reservasService = {
 
   // Obtener reservas por sala
   async obtenerReservasPorSala(sala: SalaType): Promise<Reserva[]> {
+    // Sin embeds automáticos para evitar ambigüedad con múltiples FK a usuarios
     const { data, error } = await supabase
       .from("reservas")
-      .select(`
-        *,
-        usuario_email:usuarios(email),
-        usuario_nombre:usuarios(nombre),
-        usuario_rol:usuarios(rol)
-      `)
+      .select("*")
       .eq("sala", sala)
       .eq("estado", "confirmada")
       .order("fecha_inicio", { ascending: true });
 
     if (error) throw error;
-    return (data || []).map((r: any) => ({
-      ...r,
-      usuario_email: r.usuario_email?.email || undefined,
-      usuario_nombre: r.usuario_nombre?.nombre || undefined,
-      usuario_rol: r.usuario_rol?.rol || undefined,
-    }));
+
+    // Obtener todos los usuarios para enriquecer datos
+    const { data: usuarios } = await supabase
+      .from("usuarios")
+      .select("id, email, nombre, rol");
+
+    return (data || []).map((r: any) => {
+      const user = (usuarios || []).find((u: any) => u.id === r.usuario_id);
+      return {
+        ...r,
+        usuario_email: user?.email || undefined,
+        usuario_nombre: user?.nombre || undefined,
+        usuario_rol: user?.rol || undefined,
+      };
+    });
   },
 };
