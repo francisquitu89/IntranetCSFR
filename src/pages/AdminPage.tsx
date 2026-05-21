@@ -26,6 +26,8 @@ const formatDateDisplay = (dateString: string) => {
   });
 };
 
+const timeToDateTime = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
+
 export function AdminPage({ usuario }: AdminPageProps) {
   const [selectedDate, setSelectedDate] = useState(formatLocalDate());
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -65,9 +67,8 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const cargarDatos = async () => {
     try {
       setRefreshing(true);
-      const [todasReservas, reservasDelDia, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
+      const [todasReservas, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
         reservasService.obtenerReservasConfirmadas(),
-        reservasService.obtenerReservasConfirmadasPorFecha(selectedDate),
         ticketsService.obtenerTodosTickets(),
         supabase.from("usuarios").select("*").order("nombre", { ascending: true }),
         inventarioService.obtenerInventario(),
