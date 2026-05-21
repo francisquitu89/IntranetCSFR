@@ -15,7 +15,16 @@ interface AdminPageProps {
 }
 
 const formatLocalDate = () => new Date().toLocaleDateString("en-CA");
-const timeToDateTime = (date: string, time: string) => new Date(`${date}T${time}:00`).toISOString();
+
+const formatDateDisplay = (dateString: string) => {
+  const [year, month, day] = dateString.split("-");
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString("es-CL", { 
+    weekday: "long", 
+    year: "numeric", 
+    month: "long", 
+    day: "numeric" 
+  });
+};
 
 export function AdminPage({ usuario }: AdminPageProps) {
   const [selectedDate, setSelectedDate] = useState(formatLocalDate());
@@ -56,7 +65,8 @@ export function AdminPage({ usuario }: AdminPageProps) {
   const cargarDatos = async () => {
     try {
       setRefreshing(true);
-      const [reservasDelDia, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
+      const [todasReservas, reservasDelDia, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
+        reservasService.obtenerReservasConfirmadas(),
         reservasService.obtenerReservasConfirmadasPorFecha(selectedDate),
         ticketsService.obtenerTodosTickets(),
         supabase.from("usuarios").select("*").order("nombre", { ascending: true }),
@@ -65,10 +75,9 @@ export function AdminPage({ usuario }: AdminPageProps) {
 
       if (usuariosGlobales.error) throw usuariosGlobales.error;
 
-      setReservas(reservasDelDia);
+      setReservas(todasReservas);
       setTickets(ticketsGlobales);
       setUsuarios((usuariosGlobales.data || []) as Usuario[]);
-      setReservasFilterDate(formatLocalDate());
       
       const map: Record<string, number> = {};
       (inventarioRows || []).forEach((it) => (map[it.sala] = it.cantidad));
@@ -318,17 +327,24 @@ export function AdminPage({ usuario }: AdminPageProps) {
     };
   }, [selectedDate]);
 
+  // Filtrar reservas del día seleccionado
+  const reservasDelDia = useMemo(() => {
+    return reservas.filter((reserva) => 
+      new Date(reserva.fecha_inicio).toLocaleDateString("en-CA") === selectedDate
+    );
+  }, [reservas, selectedDate]);
+
   const metrics = useMemo(() => {
-    const reservasActivas = reservas.filter((reserva) => reserva.estado === "confirmada").length;
+    const reservasActivas = reservasDelDia.filter((reserva) => reserva.estado === "confirmada").length;
     const ticketsAbiertos = tickets.filter((ticket) => ticket.estado === "Abierto" || ticket.estado === "En Progreso").length;
-    const salasOcupadas = new Set(reservas.map((reserva) => reserva.sala)).size;
+    const salasOcupadas = new Set(reservasDelDia.map((reserva) => reserva.sala)).size;
     return {
       reservasActivas,
       ticketsAbiertos,
       salasOcupadas,
       usuariosTotal: usuarios.length,
     };
-  }, [reservas, tickets, usuarios]);
+  }, [reservasDelDia, tickets, usuarios]);
 
   const actividad = useMemo(() => {
     const reservasActividad = reservas.map((reserva) => ({
@@ -516,7 +532,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
 
         <div style={{ marginTop: "1rem" }}>
           <AvailabilityBoard
-            reservas={reservas}
+            reservas={reservasDelDia}
             salas={SALAS_CATALOGO}
             selectedDate={selectedDate}
             title="Ocupación global del día"
@@ -526,7 +542,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
 
         <div style={{ marginTop: "1rem" }}>
           <EquipmentAvailabilityBoard
-            reservas={reservas}
+            reservas={reservasDelDia}
             equipos={SALAS_CATALOGO.filter(s => s.tipo === "Objeto")}
             selectedDate={selectedDate}
             inventario={inventario}
@@ -548,7 +564,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
                 const cantidadActual = inventario[equipo.value] || 0;
                 
                 // Calcular dinámicamente cuántos están reservados hoy
-                const reservasDelEquipoHoy = reservas.filter(r => r.sala === equipo.value);
+                const reservasDelEquipoHoy = reservasDelDia.filter(r => r.sala === equipo.value);
                 const cantidadReservada = reservasDelEquipoHoy.reduce((acc, r) => acc + (r.cantidad || 1), 0);
                 const disponibleAhora = Math.max(0, cantidadActual - cantidadReservada);
                 
@@ -778,7 +794,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
                   style={{ width: "auto" }}
                 />
                 <span className="muted" style={{ marginTop: "0.75rem" }}>
-                  {new Date(reservasFilterDate).toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                  {formatDateDisplay(reservasFilterDate)}
                 </span>
               </div>
             </div>
