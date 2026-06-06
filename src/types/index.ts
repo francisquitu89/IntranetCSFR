@@ -35,7 +35,7 @@ export type TicketCategoryType =
   | "Otros";
 
 export type TicketPriorityType = "Baja" | "Media" | "Alta" | "Urgente";
-export type TicketStatusType = "Abierto" | "En Progreso" | "Resuelto" | "Cerrado";
+export type TicketStatusType = "Abierto" | "En Progreso" | "Resuelto" | "Cerrado" | "Rechazado";
 
 // Interfaces
 export interface Usuario {
@@ -86,7 +86,15 @@ export interface Ticket {
   estado: TicketStatusType;
   respuesta?: string;
   respondido_por?: string;
+  respondido_por_nombre?: string;
+  respondido_por_email?: string;
   respondido_en?: string;
+  aprobado_por?: string;
+  aprobado_por_nombre?: string;
+  aprobado_en?: string;
+  razon_rechazo?: string;
+  rechazado_por?: string;
+  rechazado_en?: string;
   created_at: string;
   updated_at: string;
 }

@@ -1,7 +1,7 @@
 import type { Reserva, Ticket, Usuario } from "../types";
 
 const DEFAULT_CC_RESERVAS = "dperez@csfr.cl, soporte@csfr.cl";
-const DEFAULT_CC_TICKETS = "dperez@csfr.cl, ependas@csfr.cl, soporte@csfr.cl";
+const DEFAULT_CC_TICKETS = "dperez@csfr.cl, servicios@csfr.cl, soporte@csfr.cl";
 
 interface EmailPayload {
   destinatario: string;
@@ -78,19 +78,54 @@ export const notificarTicket = async (
   usuario: Partial<Usuario>,
   accion: "creado" | "actualizado"
 ) => {
+  // No enviar email si el ticket está rechazado
+  if (ticket.estado === "Rechazado") {
+    return;
+  }
+
+  // Función para obtener tiempo de respuesta según categoría
+  const obtenerTiempoRespuesta = (categoria: string): string => {
+    const tiemposRespuesta: Record<string, string> = {
+      "Requerimientos Audiovisuales": "1 a 3 días hábiles",
+      "Requerimientos Mantención": "1 a 3 días hábiles",
+      "Requerimientos SSGG": "1 día hábil",
+      "Requerimientos TI": "1 a 3 días hábiles",
+      "Requerimientos Administración y finanzas": "1 a 2 días hábiles",
+      "Eventos especiales": "1 a 3 días hábiles",
+      "Otros": "2 a 3 días hábiles",
+    };
+    return tiemposRespuesta[categoria] || "2 a 3 días hábiles";
+  };
+
+  // Determinar si enviar email basado en el estado
+  const debeEnviarEmail = (estado: string, accion: string) => {
+    if (estado === "Abierto" && accion === "creado") return true; // Enviar cuando se crea
+    if (estado === "Resuelto" && accion === "actualizado") return true; // Enviar cuando se resuelve
+    if (estado === "En Progreso" && accion === "actualizado") return false; // No enviar en progreso
+    return false;
+  };
+
+  if (!debeEnviarEmail(ticket.estado, accion)) {
+    return;
+  }
+
   const accionTexto =
     accion === "creado" ? "creado" : "actualizado";
   const titulo =
     accion === "creado"
       ? "Ticket Creado - SSFF Intranet"
-      : "Ticket Actualizado - SSFF Intranet";
+      : "Ticket Resuelto - SSFF Intranet";
+
+  const tiempoRespuesta = obtenerTiempoRespuesta(ticket.categoria);
 
   const cuerpoHtml = `
     <html>
       <body style="font-family: Arial, sans-serif;">
         <h2>${titulo}</h2>
         <p>Estimado/a ${usuario.nombre},</p>
-        <p>Tu ticket ha sido ${accionTexto} exitosamente.</p>
+        ${accion === "creado" 
+          ? `<p>Tu ticket ha sido ${accionTexto} exitosamente y está en proceso de aprobación.</p>` 
+          : `<p>Tu ticket ha sido ${accionTexto}.</p>`}
         <hr>
         <p><strong>Detalles del Ticket:</strong></p>
         <ul>
@@ -99,8 +134,10 @@ export const notificarTicket = async (
           <li><strong>Asunto:</strong> ${ticket.asunto}</li>
           <li><strong>Prioridad:</strong> ${ticket.prioridad}</li>
           <li><strong>Estado:</strong> ${ticket.estado}</li>
+          <li><strong>Tiempo de Respuesta:</strong> ${tiempoRespuesta}</li>
           ${ticket.sala ? `<li><strong>Sala:</strong> ${ticket.sala}</li>` : ""}
           ${ticket.equipo ? `<li><strong>Equipo:</strong> ${ticket.equipo}</li>` : ""}
+          ${ticket.respondido_por_nombre ? `<li><strong>Responsable:</strong> ${ticket.respondido_por_nombre}</li>` : ""}
         </ul>
         <hr>
         <p>Puedes revisar el estado de tu ticket en la Intranet.</p>

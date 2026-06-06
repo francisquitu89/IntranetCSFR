@@ -213,22 +213,6 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
                   />
                 </div>
 
-                <div className="field">
-                  <label>Sala opcional</label>
-                  <select
-                    value={formData.sala}
-                    onChange={(e) => setFormData({ ...formData, sala: e.target.value })}
-                    className="select"
-                  >
-                    <option value="">Selecciona una sala...</option>
-                    {SALAS.map((sala) => (
-                      <option key={sala} value={sala}>
-                        {sala}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div className="field" style={{ gridColumn: "1 / -1" }}>
                   <label>Equipo opcional</label>
                   <input

@@ -15,12 +15,31 @@ export const ticketsService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return (data || []).map((ticket: any) => ({
+    
+    // Obtener información del responsable
+    const tickets = (data || []).map((ticket: any) => ({
       ...ticket,
       usuario_nombre: ticket.usuarios?.nombre,
       usuario_email: ticket.usuarios?.email,
       usuario_rol: ticket.usuarios?.rol,
     }));
+
+    // Cargar información del responsable si existe
+    for (const ticket of tickets) {
+      if (ticket.respondido_por) {
+        const { data: responsable } = await supabase
+          .from("usuarios")
+          .select("nombre, email")
+          .eq("id", ticket.respondido_por)
+          .single();
+        if (responsable) {
+          ticket.respondido_por_nombre = responsable.nombre;
+          ticket.respondido_por_email = responsable.email;
+        }
+      }
+    }
+
+    return tickets;
   },
 
   // Obtener todos los tickets (para funcionarios/admins)
@@ -34,12 +53,30 @@ export const ticketsService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return (data || []).map((ticket: any) => ({
+    
+    const tickets = (data || []).map((ticket: any) => ({
       ...ticket,
       usuario_nombre: ticket.usuarios?.nombre,
       usuario_email: ticket.usuarios?.email,
       usuario_rol: ticket.usuarios?.rol,
     }));
+
+    // Cargar información del responsable si existe
+    for (const ticket of tickets) {
+      if (ticket.respondido_por) {
+        const { data: responsable } = await supabase
+          .from("usuarios")
+          .select("nombre, email")
+          .eq("id", ticket.respondido_por)
+          .single();
+        if (responsable) {
+          ticket.respondido_por_nombre = responsable.nombre;
+          ticket.respondido_por_email = responsable.email;
+        }
+      }
+    }
+
+    return tickets;
   },
 
   // Obtener tickets según el rol del usuario
@@ -175,5 +212,78 @@ export const ticketsService = {
       .eq("id", ticketId);
 
     if (error) throw error;
+  },
+
+  // Aprobar un ticket y asignar responsable
+  async aprobarTicket(
+    ticketId: string,
+    aprobadoPorId: string,
+    responsableId: string
+  ): Promise<Ticket> {
+    // Obtener información del responsable
+    const { data: responsable } = await supabase
+      .from("usuarios")
+      .select("nombre, email")
+      .eq("id", responsableId)
+      .single();
+
+    const { data, error } = await supabase
+      .from("tickets")
+      .update({
+        estado: "En Progreso",
+        aprobado_por: aprobadoPorId,
+        aprobado_en: new Date().toISOString(),
+        respondido_por: responsableId,
+        respondido_por_nombre: responsable?.nombre,
+        respondido_por_email: responsable?.email,
+      })
+      .eq("id", ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Rechazar un ticket
+  async rechazarTicket(
+    ticketId: string,
+    rechazadoPorId: string,
+    razonRechazo: string
+  ): Promise<Ticket> {
+    const { data, error } = await supabase
+      .from("tickets")
+      .update({
+        estado: "Rechazado",
+        rechazado_por: rechazadoPorId,
+        rechazado_en: new Date().toISOString(),
+        razon_rechazo: razonRechazo,
+      })
+      .eq("id", ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Obtener tickets pendientes de aprobación
+  async obtenerTicketsPendientesAprobacion(): Promise<Ticket[]> {
+    const { data, error } = await supabase
+      .from("tickets")
+      .select(`
+        *,
+        usuarios!usuario_id(nombre, email, rol)
+      `)
+      .eq("estado", "Abierto")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map((ticket: any) => ({
+      ...ticket,
+      usuario_nombre: ticket.usuarios?.nombre,
+      usuario_email: ticket.usuarios?.email,
+      usuario_rol: ticket.usuarios?.rol,
+    }));
   },
 };

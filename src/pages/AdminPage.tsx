@@ -6,6 +6,7 @@ import { ticketsService } from "../services/ticketsService";
 import { inventarioService } from "../services/inventarioService";
 import { AvailabilityBoard, TIME_SLOTS } from "../components/AvailabilityBoard";
 import { EquipmentAvailabilityBoard } from "../components/EquipmentAvailabilityBoard";
+import { TicketApprovalPanel } from "../components/TicketApprovalPanel";
 import { authService } from "../services/authService";
 import { SALAS_CATALOGO } from "../data/salas";
 import type { Reserva, Ticket as TicketType, Usuario } from "../types";
@@ -406,6 +407,8 @@ export function AdminPage({ usuario }: AdminPageProps) {
         </div>
 
         {error && <div className="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
+
+        <TicketApprovalPanel usuario={usuario} />
 
         <section className="form-card" style={{ marginBottom: "1rem" }}>
           <div className="section-title-wrap">

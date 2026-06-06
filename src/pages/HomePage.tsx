@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigation } from "../contexts/NavigationContext";
+import { NotificationsWidget } from "../components/NotificationsWidget";
 import type { Usuario } from "../types";
 import { Calendar, AlertCircle, Building2 } from "lucide-react";
 
@@ -73,15 +74,15 @@ export function HomePage({ usuario }: HomePageProps) {
   return (
     <main className="app-content hero">
       {showPasswordReminder && (
-        <div className="alert" style={{ backgroundColor: "rgba(255, 193, 7, 0.1)", borderLeft: "4px solid #ffc107", margin: "1rem auto", maxWidth: "55rem", marginBottom: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+        <div className="alert" style={{ backgroundColor: "rgba(255, 193, 7, 0.1)", borderLeft: "4px solid #ffc107", margin: "1rem auto", maxWidth: "55rem", marginBottom: "1rem", padding: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
             <div>
-              <strong style={{ color: "#ffc107" }}>⚠️ Recordatorio de seguridad</strong>
+              <strong style={{ color: "#ffc107", fontSize: "1rem", display: "block", marginBottom: "0.5rem" }}>⚠️ Recordatorio de seguridad</strong>
               <p className="muted" style={{ marginTop: "0.25rem", marginBottom: 0 }}>Cambia tu contraseña temporal por una más segura.</p>
             </div>
-            <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-              <button onClick={handleGoToChangePassword} className="button" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}>Cambiar ahora</button>
-              <button onClick={handlePasswordReminderDismiss} className="button-secondary" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}>Recordar después</button>
+            <div style={{ display: "flex", gap: "0.75rem", flexShrink: 0, width: "100%", flexWrap: "wrap" }}>
+              <button onClick={handleGoToChangePassword} className="button" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", flex: "1 1 auto", minWidth: "120px" }}>Cambiar ahora</button>
+              <button onClick={handlePasswordReminderDismiss} className="button-secondary" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", flex: "1 1 auto", minWidth: "120px" }}>Recordar después</button>
             </div>
           </div>
         </div>
@@ -107,6 +108,8 @@ export function HomePage({ usuario }: HomePageProps) {
             )}
           </div>
         </section>
+
+        <NotificationsWidget usuario={usuario} />
 
         <section className="section">
           <div className="section-title-wrap">
