@@ -1,0 +1,37 @@
+-- Migración: Agregación de nuevos roles
+-- Fecha: 2026-06-06
+-- Descripción: Se añaden dos nuevos roles sin eliminar los antiguos
+-- 
+-- NOTA: El campo "rol" en la tabla usuarios es TEXT, no es un ENUM, 
+-- por lo que no requiere cambios de estructura de base de datos.
+-- Solo se necesita actualizar la lógica de la aplicación.
+--
+-- Nuevos roles disponibles:
+--   - 'academico' (equivalente a 'profesor', con las mismas funciones)
+--   - 'administrativo' (equivalente a 'funcionario', con las mismas funciones)
+--
+-- Roles existentes (se mantienen):
+--   - 'profesor'
+--   - 'funcionario'
+--   - 'admin'
+--   - 'director'
+--   - 'servicios_generales'
+--
+-- ============================================================================
+-- MIGRACIONES OPCIONALES (ejecutar solo si deseas migrar usuarios existentes)
+-- ============================================================================
+--
+-- Opción 1: Migrar todos los profesores a académicos
+-- UPDATE usuarios SET rol = 'academico' WHERE rol = 'profesor';
+--
+-- Opción 2: Migrar todos los funcionarios a administrativos
+-- UPDATE usuarios SET rol = 'administrativo' WHERE rol = 'funcionario';
+--
+-- Opción 3: Migrar ambos (profesores y funcionarios)
+-- UPDATE usuarios SET rol = 'academico' WHERE rol = 'profesor';
+-- UPDATE usuarios SET rol = 'administrativo' WHERE rol = 'funcionario';
+--
+-- ============================================================================
+-- Verificación: Ver distribución de roles después de migración
+-- ============================================================================
+-- SELECT rol, COUNT(*) as cantidad FROM usuarios GROUP BY rol ORDER BY rol;

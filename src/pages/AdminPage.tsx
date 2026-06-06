@@ -70,7 +70,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
       setRefreshing(true);
       const [todasReservas, ticketsGlobales, usuariosGlobales, inventarioRows] = await Promise.all([
         reservasService.obtenerReservasConfirmadas(),
-        ticketsService.obtenerTodosTickets(),
+        ticketsService.obtenerTicketsSegunRol(usuario?.id || "", usuario?.rol || ""),
         supabase.from("usuarios").select("*").order("nombre", { ascending: true }),
         inventarioService.obtenerInventario(),
       ]);
@@ -207,6 +207,19 @@ export function AdminPage({ usuario }: AdminPageProps) {
         .eq("id", editingUsuarioId);
 
       if (error) throw error;
+
+      // Si el usuario editado es el usuario actual, actualizar localStorage y disparar evento
+      if (usuario && usuario.id === editingUsuarioId) {
+        const usuarioActualizado = {
+          ...usuario,
+          nombre: editingUsuarioData.nombre,
+          email: editingUsuarioData.email,
+          rol: editingUsuarioData.rol,
+        };
+        localStorage.setItem("ssff_temp_user", JSON.stringify(usuarioActualizado));
+        // Disparar evento para que App.tsx actualice su estado
+        window.dispatchEvent(new CustomEvent("usuarioActualizado", { detail: usuarioActualizado }));
+      }
 
       // Reload data
       await cargarDatos();
@@ -375,7 +388,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
       .slice(0, 8);
   }, [reservas, tickets, usuarios]);
 
-  if (usuario && usuario.rol !== "admin" && usuario.rol !== "director" && usuario.rol !== "funcionario") {
+  if (usuario && usuario.rol !== "admin" && usuario.rol !== "director" && usuario.rol !== "funcionario" && usuario.rol !== "administrativo") {
     return null;
   }
 
@@ -703,8 +716,10 @@ export function AdminPage({ usuario }: AdminPageProps) {
                           onChange={(e) => setEditingUsuarioData({ ...editingUsuarioData, rol: e.target.value })}
                           className="select"
                         >
-                          <option value="profesor">Profesor</option>
-                          <option value="funcionario">Funcionario</option>
+                          <option value="academico">Académico</option>
+                          <option value="administrativo">Administrativo</option>
+                          <option value="profesor">Profesor (Legado)</option>
+                          <option value="funcionario">Funcionario (Legado)</option>
                           <option value="servicios_generales">Servicios Generales</option>
                         </select>
                       </div>
@@ -998,7 +1013,6 @@ export function AdminPage({ usuario }: AdminPageProps) {
                           <option value="Abierto">Abierto</option>
                           <option value="En Progreso">En Progreso</option>
                           <option value="Resuelto">Resuelto</option>
-                          <option value="Cerrado">Cerrado</option>
                         </select>
                       </div>
                     </div>
@@ -1044,7 +1058,7 @@ export function AdminPage({ usuario }: AdminPageProps) {
                       <div style={{ flex: 1 }}>
                         {ticket.respuesta && (
                           <div style={{ marginBottom: "0.5rem", padding: "0.75rem", backgroundColor: "#f5f5f5", borderRadius: "0.25rem", fontSize: "0.9rem" }}>
-                            <strong>Respuesta del admin:</strong>
+                            <strong>Respuesta de {ticket.respondido_por_nombre || "Administrador"}:</strong>
                             <div style={{ marginTop: "0.5rem", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                               {ticket.respuesta}
                             </div>

@@ -30,6 +30,19 @@ function AppContent() {
     verificarSesion();
   }, []);
 
+  useEffect(() => {
+    // Escuchar actualizaciones de usuario desde AdminPage
+    const handleUsuarioActualizado = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail) {
+        setUsuario(customEvent.detail as Usuario);
+      }
+    };
+
+    window.addEventListener("usuarioActualizado", handleUsuarioActualizado);
+    return () => window.removeEventListener("usuarioActualizado", handleUsuarioActualizado);
+  }, []);
+
   const verificarSesion = async () => {
     try {
       const sesion = await authService.obtenerSesion();
@@ -62,7 +75,7 @@ function AppContent() {
     }
   };
 
-  const canViewAdmin = usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "funcionario";
+  const canViewAdmin = usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "funcionario" || usuario?.rol === "administrativo";
 
   if (loading) {
     return (

@@ -77,7 +77,7 @@ export function Navigation({ usuario, onNavigate }: NavigationProps) {
           >
             Tickets
           </button>
-          {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
+          {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario" || usuario.rol === "administrativo") && (
             <button
               type="button"
               onClick={() => onNavigate("admin")}

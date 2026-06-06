@@ -109,50 +109,77 @@ export const notificarTicket = async (
     return;
   }
 
-  const accionTexto =
-    accion === "creado" ? "creado" : "actualizado";
-  const titulo =
-    accion === "creado"
-      ? "Ticket Creado - SSFF Intranet"
-      : "Ticket Resuelto - SSFF Intranet";
+  let cuerpoHtml = "";
+  let asunto = "";
 
-  const tiempoRespuesta = obtenerTiempoRespuesta(ticket.categoria);
+  if (accion === "creado") {
+    const tiempoRespuesta = obtenerTiempoRespuesta(ticket.categoria);
+    asunto = `Ticket Creado - ${ticket.asunto}`;
+    cuerpoHtml = `
+      <html>
+        <body style="font-family: Arial, sans-serif;">
+          <h2>Ticket Creado</h2>
+          <p>Estimado/a ${usuario.nombre},</p>
+          <p>Tu ticket ha sido creado exitosamente y está en proceso de aprobación.</p>
+          <hr>
+          <p><strong>Detalles del Ticket:</strong></p>
+          <ul>
+            <li><strong>Ticket ID:</strong> ${ticket.id}</li>
+            <li><strong>Categoría:</strong> ${ticket.categoria}</li>
+            <li><strong>Asunto:</strong> ${ticket.asunto}</li>
+            <li><strong>Prioridad:</strong> ${ticket.prioridad}</li>
+            <li><strong>Tiempo de Respuesta Estimado:</strong> ${tiempoRespuesta}</li>
+          </ul>
+          <hr>
+          <p>Puedes revisar el estado de tu ticket en la Intranet.</p>
+          <p>Cordialmente,<br>Sistema SSFF</p>
+        </body>
+      </html>
+    `;
+  } else if (ticket.estado === "Resuelto") {
+    asunto = `¡Tu ticket ha sido resuelto! - ${ticket.asunto}`;
+    cuerpoHtml = `
+      <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="color: #22c55e; margin: 0;">✓ ¡Tu ticket ha sido resuelto!</h2>
+            </div>
+            
+            <p style="color: #333; font-size: 16px;">Hola ${usuario.nombre},</p>
+            
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+              Nos complace informarte que tu solicitud ha sido resuelta.
+            </p>
 
-  const cuerpoHtml = `
-    <html>
-      <body style="font-family: Arial, sans-serif;">
-        <h2>${titulo}</h2>
-        <p>Estimado/a ${usuario.nombre},</p>
-        ${accion === "creado" 
-          ? `<p>Tu ticket ha sido ${accionTexto} exitosamente y está en proceso de aprobación.</p>` 
-          : `<p>Tu ticket ha sido ${accionTexto}.</p>`}
-        <hr>
-        <p><strong>Detalles del Ticket:</strong></p>
-        <ul>
-          <li><strong>Ticket ID:</strong> ${ticket.id}</li>
-          <li><strong>Categoría:</strong> ${ticket.categoria}</li>
-          <li><strong>Asunto:</strong> ${ticket.asunto}</li>
-          <li><strong>Prioridad:</strong> ${ticket.prioridad}</li>
-          <li><strong>Estado:</strong> ${ticket.estado}</li>
-          <li><strong>Tiempo de Respuesta:</strong> ${tiempoRespuesta}</li>
-          ${ticket.sala ? `<li><strong>Sala:</strong> ${ticket.sala}</li>` : ""}
-          ${ticket.equipo ? `<li><strong>Equipo:</strong> ${ticket.equipo}</li>` : ""}
-          ${ticket.respondido_por_nombre ? `<li><strong>Responsable:</strong> ${ticket.respondido_por_nombre}</li>` : ""}
-        </ul>
-        <hr>
-        <p>Puedes revisar el estado de tu ticket en la Intranet.</p>
-        <p>Cordialmente,<br>Sistema SSFF</p>
-      </body>
-    </html>
-  `;
+            <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <p style="margin: 0; color: #1e7e34; font-weight: bold; font-size: 14px;">Ticket: ${ticket.asunto}</p>
+              <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">ID: ${ticket.id}</p>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+              Puedes revisar los detalles completos de tu ticket en la Intranet.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              Sistema SSFF<br>
+              <a href="#" style="color: #0ea5e9; text-decoration: none;">Acceder a la Intranet</a>
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+  }
 
   try {
     await registrarNotificacion({
       destinatario: usuario.email || "",
       cc: DEFAULT_CC_TICKETS,
-      asunto: `Ticket ${accionTexto} - ${ticket.asunto}`,
+      asunto: asunto,
       cuerpo_html: cuerpoHtml,
-      cuerpo_texto: `Ticket ${accionTexto}: ${ticket.asunto}`,
+      cuerpo_texto: asunto,
     });
   } catch (error) {
     console.error("Error al enviar notificación de ticket:", error);

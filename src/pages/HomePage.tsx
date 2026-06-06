@@ -98,12 +98,12 @@ export function HomePage({ usuario }: HomePageProps) {
           <span className="eyebrow">Bienvenido</span>
           <h1 className="hero-title" style={{ fontSize: "clamp(2.1rem, 4vw, 3.4rem)" }}>Intranet de CSFR</h1>
           <p className="hero-copy">
-            {usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario"
+            {usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario" || usuario.rol === "administrativo"
               ? "Panel de Administración"
               : "Portal de Reservas y Soporte"}
           </p>
           <div className="hero-actions">
-            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
+            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario" || usuario.rol === "administrativo") && (
               <button type="button" className="button" onClick={() => navigate("admin")}>Abrir Admin</button>
             )}
           </div>
@@ -142,7 +142,7 @@ export function HomePage({ usuario }: HomePageProps) {
               </div>
             </div>
 
-            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario") && (
+            {(usuario.rol === "admin" || usuario.rol === "director" || usuario.rol === "funcionario" || usuario.rol === "administrativo") && (
               <div className="feature-card" onClick={() => navigate("admin")} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div className="feature-icon green"><Building2 size={22} /></div>
                 <div>

@@ -81,11 +81,44 @@ export const ticketsService = {
 
   // Obtener tickets según el rol del usuario
   async obtenerTicketsSegunRol(usuarioId: string, rol: string): Promise<Ticket[]> {
-    if (rol === "funcionario" || rol === "admin" || rol === "director") {
-      // Funcionarios, admins y directores ven todos los tickets
-      return this.obtenerTodosTickets();
+    if (rol === "funcionario" || rol === "admin" || rol === "director" || rol === "administrativo") {
+      // Funcionarios, admins, directores y administrativos solo ven los tickets asignados a ellos
+      const { data, error } = await supabase
+        .from("tickets")
+        .select(`
+          *,
+          usuarios!usuario_id(nombre, email, rol)
+        `)
+        .eq("respondido_por", usuarioId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      const tickets = (data || []).map((ticket: any) => ({
+        ...ticket,
+        usuario_nombre: ticket.usuarios?.nombre,
+        usuario_email: ticket.usuarios?.email,
+        usuario_rol: ticket.usuarios?.rol,
+      }));
+
+      // Cargar información del responsable si existe
+      for (const ticket of tickets) {
+        if (ticket.respondido_por) {
+          const { data: responsable } = await supabase
+            .from("usuarios")
+            .select("nombre, email")
+            .eq("id", ticket.respondido_por)
+            .single();
+          if (responsable) {
+            ticket.respondido_por_nombre = responsable.nombre;
+            ticket.respondido_por_email = responsable.email;
+          }
+        }
+      }
+
+      return tickets;
     } else {
-      // Profesores solo ven sus propios tickets
+      // Profesores y académicos solo ven sus propios tickets
       return this.obtenerTicketsUsuario(usuarioId);
     }
   },
@@ -136,6 +169,18 @@ export const ticketsService = {
     ticketId: string,
     updates: Partial<Ticket>
   ): Promise<Ticket> {
+    // Obtener el ticket actual para verificar cambios de estado
+    const { data: ticketActual, error: fetchError } = await supabase
+      .from("tickets")
+      .select(`
+        *,
+        usuarios!usuario_id(nombre, email, rol)
+      `)
+      .eq("id", ticketId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
     const { data, error } = await supabase
       .from("tickets")
       .update(updates)
@@ -144,6 +189,12 @@ export const ticketsService = {
       .single();
 
     if (error) throw error;
+
+    // Si el estado cambió a "Resuelto", enviar notificación
+    if (updates.estado === "Resuelto" && ticketActual?.usuarios) {
+      await notificarTicket(data, ticketActual.usuarios, "actualizado");
+    }
+
     return data;
   },
 

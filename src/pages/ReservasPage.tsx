@@ -624,7 +624,7 @@ export function ReservasPage({ usuario }: ReservasPageProps) {
                   </div>
                   {reserva.estado === "confirmada" && (
                     <div className="admin-row-actions">
-                      {(usuario?.rol === "admin" || usuario?.rol === "funcionario" || usuario?.id === reserva.usuario_id) && (
+                      {(usuario?.rol === "admin" || usuario?.rol === "funcionario" || usuario?.rol === "administrativo" || usuario?.id === reserva.usuario_id) && (
                         <button
                           onClick={() => {
                             const fechaReserva = reserva.fecha_inicio.split("T")[0];

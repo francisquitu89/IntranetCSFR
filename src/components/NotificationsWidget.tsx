@@ -42,7 +42,6 @@ export function NotificationsWidget({ usuario }: NotificationsWidgetProps) {
       case "En Progreso":
         return <Clock size={20} className="text-blue-500" />;
       case "Resuelto":
-      case "Cerrado":
         return <CheckCircle size={20} className="text-green-500" />;
       case "Rechazado":
         return <AlertCircle size={20} className="text-red-500" />;
@@ -81,7 +80,6 @@ export function NotificationsWidget({ usuario }: NotificationsWidgetProps) {
           badge: "bg-blue-100 text-blue-700",
         };
       case "Resuelto":
-      case "Cerrado":
         return {
           bg: "bg-white",
           border: "border-l-4 border-l-green-500",
@@ -221,7 +219,7 @@ export function NotificationsWidget({ usuario }: NotificationsWidgetProps) {
                       </div>
                     )}
 
-                    {ticket.respuesta && ticket.estado === "Resuelto" && (
+                    {ticket.respuesta && (
                       <div style={{ 
                         fontSize: "0.85rem", 
                         color: "#475569",
@@ -231,7 +229,9 @@ export function NotificationsWidget({ usuario }: NotificationsWidgetProps) {
                         borderLeft: "3px solid #22c55e",
                         lineHeight: "1.4"
                       }}>
-                        <strong style={{ color: "#1e293b", display: "block", marginBottom: "0.25rem" }}>Respuesta:</strong>
+                        <strong style={{ color: "#1e293b", display: "block", marginBottom: "0.25rem" }}>
+                          Respuesta de {ticket.respondido_por_nombre || "Administrador"}:
+                        </strong>
                         <p style={{ margin: "0", wordBreak: "break-word" }}>
                           {ticket.respuesta}
                         </p>

@@ -36,7 +36,7 @@ export function TicketApprovalPanel({ usuario }: TicketApprovalPanelProps) {
       // Filtrar según la categoría y el rol del usuario
       let ticketsFiltrados = data;
       
-      if (usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director") {
+      if (usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "administrativo") {
         // Elena ve todos excepto Admin/Finanzas
         if (usuario.email === ELENA_EMAIL || usuario.email === SERVICIOS_EMAIL) {
           ticketsFiltrados = data.filter(
@@ -64,7 +64,7 @@ export function TicketApprovalPanel({ usuario }: TicketApprovalPanelProps) {
       const { data, error } = await supabase
         .from("usuarios")
         .select("*")
-        .in("rol", ["funcionario", "admin", "director", "servicios_generales"])
+        .in("rol", ["funcionario", "admin", "director", "administrativo", "servicios_generales"])
         .order("nombre", { ascending: true });
 
       if (error) throw error;

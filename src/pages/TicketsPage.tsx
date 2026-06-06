@@ -76,7 +76,7 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
     }
   };
 
-  const canUpdateTickets = usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director";
+  const canUpdateTickets = usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "administrativo";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,12 +142,12 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
         <div className="section-title-wrap" style={{ flexDirection: window.innerWidth < 768 ? "column" : "row", gap: window.innerWidth < 768 ? "1rem" : "0" }}>
           <div>
             <h1 className="section-title">
-              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director"
+              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "administrativo"
                 ? "Todos los tickets"
                 : "Mis tickets"}
             </h1>
             <p className="section-subtitle">
-              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director"
+              {usuario?.rol === "funcionario" || usuario?.rol === "admin" || usuario?.rol === "director" || usuario?.rol === "administrativo"
                 ? "Dashboard de soporte - Manage todas las solicitudes"
                 : "Solicitudes de soporte con una interfaz más limpia y tecnológica."}
             </p>
@@ -287,7 +287,7 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
               {ticket.respuesta && (
                 <div style={{ marginTop: "1rem", padding: "0.75rem", backgroundColor: "#f0f8ff", borderLeft: "4px solid #2563eb", borderRadius: "0.25rem" }}>
                   <p style={{ margin: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: "600", color: "#2563eb" }}>
-                    💬 Respuesta del soporte
+                    💬 Respuesta de {ticket.respondido_por_nombre || "soporte"}
                     {ticket.respondido_en && (
                       <span style={{ fontSize: "0.75rem", fontWeight: "normal", color: "#666", marginLeft: "0.5rem" }}>
                         ({format(new Date(ticket.respondido_en), "dd MMM HH:mm", { locale: es })})
@@ -311,7 +311,6 @@ export function TicketsPage({ usuario }: TicketsPageProps) {
                       <option value="Abierto">Abierto</option>
                       <option value="En Progreso">En Progreso</option>
                       <option value="Resuelto">Resuelto</option>
-                      <option value="Cerrado">Cerrado</option>
                     </select>
                   ) : (
                     <span style={{ fontSize: window.innerWidth < 640 ? "0.9rem" : "1rem" }}>{ticket.estado}</span>

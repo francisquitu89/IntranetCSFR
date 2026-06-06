@@ -35,14 +35,14 @@ export type TicketCategoryType =
   | "Otros";
 
 export type TicketPriorityType = "Baja" | "Media" | "Alta" | "Urgente";
-export type TicketStatusType = "Abierto" | "En Progreso" | "Resuelto" | "Cerrado" | "Rechazado";
+export type TicketStatusType = "Abierto" | "En Progreso" | "Resuelto" | "Rechazado";
 
 // Interfaces
 export interface Usuario {
   id: string;
   email: string;
   nombre: string;
-  rol: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
+  rol: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales" | "academico" | "administrativo";
   departamento?: string;
   telefono?: string;
   created_at: string;
@@ -53,7 +53,7 @@ export interface Reserva {
   usuario_id: string;
   usuario_email?: string;
   usuario_nombre?: string;
-  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales" | "academico" | "administrativo";
   sala: SalaType;
   fecha_inicio: string;
   fecha_fin: string;
@@ -76,7 +76,7 @@ export interface Ticket {
   usuario_id: string;
   usuario_nombre?: string;
   usuario_email?: string;
-  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales";
+  usuario_rol?: "admin" | "profesor" | "funcionario" | "director" | "servicios_generales" | "academico" | "administrativo";
   sala?: SalaType;
   equipo?: string;
   categoria: TicketCategoryType;
