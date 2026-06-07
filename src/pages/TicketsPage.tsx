@@ -3,7 +3,7 @@ import { Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ticketsService } from "../services/ticketsService";
-import type { Ticket, Usuario, TicketCategoryType, TicketPriorityType, SalaType } from "../types";
+import type { Ticket, Usuario, TicketCategoryType, TicketPriorityType } from "../types";
 
 interface TicketsPageProps {
   usuario: Usuario | null;
@@ -20,18 +20,6 @@ const CATEGORIAS: TicketCategoryType[] = [
 ];
 
 const PRIORIDADES: TicketPriorityType[] = ["Baja", "Media", "Alta", "Urgente"];
-
-const SALAS: SalaType[] = [
-  "Auditorio Grande",
-  "Auditorio Chico",
-  "Biblioteca (Cuenta Cuentos)",
-  "Biblioteca (mesas de trabajo)",
-  "Sala VIP",
-  "Sala 33",
-  "Sala Computación",
-  "Préstamo Notebooks",
-  "Préstamo Tablets",
-];
 
 export function TicketsPage({ usuario }: TicketsPageProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
