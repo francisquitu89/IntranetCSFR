@@ -41,39 +41,28 @@ app.use((req, res, next) => {
 });
 
 // SERVIR ARCHIVOS ESTÁTICOS
-// fallthrough: true es CRÍTICO - sin esto, express.static() devuelve 404 y NO pasa al siguiente middleware
-console.log(`📦 Mounting express.static with fallthrough: true`);
+// CRÍTICO: Servir archivos con cache headers apropiados
+console.log(`📦 Mounting express.static for ${distPath}`);
 app.use(express.static(distPath, {
-  maxAge: '1h',
-  etag: false,
-  fallthrough: true  // CRÍTICO
+  maxAge: '1d',
+  immutable: true,
+  fallthrough: true  // CRÍTICO - permite que siga al catchall
 }));
 
-// CATCHALL PARA TODAS LAS RUTAS
-// Este middleware DEBE ejecutarse SIEMPRE
-app.get('*', (req, res) => {
+// CATCHALL PARA TODAS LAS RUTAS - SPA ROUTING
+// Este middleware DEBE ejecutarse SIEMPRE para SPA routing
+app.use((req, res) => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ⭐ CATCHALL for: ${req.path}`);
+  console.log(`[${timestamp}] ⭐ Serving index.html for: ${req.method} ${req.path}`);
   
-  if (req.path === '/') {
-    console.log(`[${timestamp}] 📄 Serving: index.html`);
-    res.type('text/html; charset=utf-8');
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    return res.sendFile(indexPath);
-  }
-  
-  console.log(`[${timestamp}] 🔄 Redirecting: ${req.path} → /`);
-  res.redirect(301, '/');
-});
-
-// POST y otros métodos también van a catchall
-app.all('*', (req, res) => {
-  console.log(`[${new Date().toISOString()}] 🔄 Catchall for ${req.method} ${req.path}`);
-  if (req.path !== '/') {
-    return res.redirect(301, '/');
-  }
   res.type('text/html; charset=utf-8');
-  return res.sendFile(indexPath);
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error(`[${timestamp}] ❌ Error serving index.html:`, err);
+      res.status(500).send('Error');
+    }
+  });
 });
 
 const server = app.listen(PORT, '0.0.0.0', () => {
