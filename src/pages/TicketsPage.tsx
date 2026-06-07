@@ -3,7 +3,7 @@ import { Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ticketsService } from "../services/ticketsService";
-import type { Ticket, Usuario, TicketCategoryType, TicketPriorityType } from "../types";
+import type { Ticket, Usuario, TicketCategoryType, TicketPriorityType, SalaType } from "../types";
 
 interface TicketsPageProps {
   usuario: Usuario | null;
